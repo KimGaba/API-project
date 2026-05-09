@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Company Data API · Admin Status Fallback</title>
+  <link rel="stylesheet" href="./public.css" />
+  <style>
+    .admin-page {
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero,
+    .panel,
+    .table-wrap,
+    .raw,
+    .site-note,
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero,
+    .panel,
+    .site-note,
+    .stat {
+      padding: 22px 18px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(45, 116, 196, 0.12), transparent 32%),
+        radial-gradient(circle at 100% 0%, rgba(42, 157, 111, 0.08), transparent 28%);
+    }
+
+    .hero > * { position: relative; z-index: 1; }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(32px, 6vw, 52px);
+      line-height: 0.98;
+      letter-spacing: -0.05em;
+      max-width: 11ch;
+    }
+
+    .hero p,
+    .muted,
+    td,
+    th,
+    li,
+    .site-note p {
+      color: var(--muted);
+    }
+
+    .hero-top,
+    .toolbar,
+    .kicker-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toolbar {
+      margin-top: 18px;
+    }
+
+    .stats,
+    .grid,
+    .notes-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1fr;
+    }
+
+    .stats { margin-top: 18px; }
+
+    .stat strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .table-wrap,
+    .raw {
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 18px 18px 0;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.03em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid rgba(163, 184, 221, 0.12);
+    }
+
+    .badge,
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid rgba(45, 116, 196, 0.14);
+      background: rgba(45, 116, 196, 0.05);
+      color: #314963;
+      font-weight: 700;
+    }
+
+    .status-chip.ok { color: var(--green); background: rgba(42, 157, 111, 0.08); border-color: rgba(42, 157, 111, 0.16); }
+    .status-chip.warn { color: #8b6a18; background: rgba(185, 137, 22, 0.08); border-color: rgba(185, 137, 22, 0.16); }
+    .status-chip.bad { color: var(--red); background: rgba(199, 86, 103, 0.08); border-color: rgba(199, 86, 103, 0.16); }
+
+    ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      overflow: auto;
+      color: #21344d;
+      font-size: 13px;
+      line-height: 1.7;
+      background: linear-gradient(180deg, rgba(244, 248, 252, 0.98), rgba(237, 243, 248, 0.98));
+      border-top: 1px solid rgba(163, 184, 221, 0.12);
+    }
+
+    .empty {
+      padding: 18px;
+      color: var(--muted);
+    }
+
+    .site-note {
+      background: rgba(249, 251, 253, 0.94);
+      box-shadow: none;
+    }
+
+    .site-note strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    @media (min-width: 760px) {
+      .hero,
+      .panel,
+      .site-note,
+      .stat { padding: 28px; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .notes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (min-width: 1120px) {
+      .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .grid { grid-template-columns: 1.15fr 0.85fr; }
+      .notes-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="brand">
+        <div class="brand-mark">CD</div>
+        <div class="brand-copy">
+          <strong>Company Data API</strong>
+          <span>Operator fallback surface aligned with the public frontend</span>
+        </div>
+      </div>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="./">Overview</a>
+        <a href="./#docs">Docs</a>
+        <a href="./#coverage">Coverage</a>
+        <a href="./#playground">Demo</a>
+        <a href="./admin.html" aria-current="page">Status</a>
+      </nav>
+      <div class="site-actions">
+        <a class="ghost-button" href="http://localhost:3012" target="_blank" rel="noreferrer">Dashboard</a>
+        <a class="button" href="http://192.168.86.23:3014" target="_blank" rel="noreferrer">Internal control surface</a>
+      </div>
+    </header>
+
+    <main class="admin-page">
+      <section class="hero">
+        <div class="hero-top">
+          <div>
+            <span class="eyebrow">Legacy fallback</span>
+            <h1>Admin status, but in the same frontend language.</h1>
+            <p>This page is still an operator fallback, not part of the public sales flow. The difference now is visual: it shares the same shell, spacing, and navigation pattern as the public surface, so the product no longer feels stitched together from unrelated pages. For the real internal destination, use the canonical control surface on :3014; the older :3013 app is deprecated.</p>
+          </div>
+          <div class="kicker-row">
+            <span class="badge">Static fallback surface</span>
+            <span class="badge">Reads from <code>/v1/admin/status</code></span>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="muted" id="generated-at">Generated: —</div>
+          <div class="site-actions">
+            <button class="ghost-button" id="refresh" type="button">Refresh</button>
+            <a class="ghost-button" href="./">Back to public site</a>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><strong id="stat-sources">—</strong><span>sources</span></div>
+          <div class="stat"><strong id="stat-active">—</strong><span>active sources</span></div>
+          <div class="stat"><strong id="stat-runs">—</strong><span>recent runs</span></div>
+          <div class="stat"><strong id="stat-written">—</strong><span>records written</span></div>
+        </div>
+      </section>
+
+      <section class="notes-grid">
+        <article class="site-note">
+          <strong>Shared header and footer behavior</strong>
+          <p>Cross-page movement now uses the same primary navigation, action area, and footer patterns as the public site.</p>
+        </article>
+        <article class="site-note">
+          <strong>Same rhythm, different audience</strong>
+          <p>The admin fallback keeps a denser information layout, but card spacing, border treatment, and typography still match the main frontend.</p>
+        </article>
+        <article class="site-note">
+          <strong>Clean separation still intact</strong>
+          <p>The page stays clearly marked as operator-oriented and does not pretend to be a normal public entry page.</p>
+        </article>
+      </section>
+
+      <div class="grid">
+        <section class="table-wrap">
+          <div class="section-head">
+            <h2>Source registry summary</h2>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Country</th>
+                <th>Status</th>
+                <th>Latest run</th>
+                <th>Coverage</th>
+              </tr>
+            </thead>
+            <tbody id="sources-body">
+              <tr><td colspan="5" class="empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="panel">
+          <div class="section-lead">
+            <span class="eyebrow">Operator notes</span>
+            <h2 style="margin:0; font-size: clamp(24px, 4vw, 34px); line-height:1.04; letter-spacing:-0.04em;">Fast context without leaving the shared shell</h2>
+            <p class="muted" style="margin:0;">This block mirrors the explanatory side-panels used on the public site, but points at operational status instead of product copy.</p>
+          </div>
+          <div id="notes-body" class="empty">Loading…</div>
+        </section>
+      </div>
+
+      <div class="grid">
+        <section class="table-wrap">
+          <div class="section-head">
+            <h2>Latest ingestion runs</h2>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Source</th>
+                <th>Run</th>
+                <th>Result</th>
+                <th>Records</th>
+              </tr>
+            </thead>
+            <tbody id="runs-body">
+              <tr><td colspan="5" class="empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="raw">
+          <div class="section-head">
+            <h2>Raw JSON</h2>
+          </div>
+          <pre id="raw-json">Loading…</pre>
+        </section>
+      </div>
+
+      <footer class="site-footer">
+        <div class="footer-grid">
+          <div class="footer-block">
+            <h4>Public surface links</h4>
+            <div class="footer-link-row">
+              <a class="footer-link-chip" href="./">Overview</a>
+              <a class="footer-link-chip" href="./#docs">Docs</a>
+              <a class="footer-link-chip" href="./#pricing">Pricing</a>
+              <a class="footer-link-chip" href="./#coverage">Coverage</a>
+            </div>
+          </div>
+          <div class="footer-block">
+            <h4>Operator surfaces</h4>
+            <div class="footer-link-row">
+              <a class="footer-link-chip" href="./admin.html">Status fallback</a>
+              <a class="footer-link-chip" href="http://localhost:3012" target="_blank" rel="noreferrer">Dashboard</a>
+              <a class="footer-link-chip" href="http://192.168.86.23:3014" target="_blank" rel="noreferrer">Internal control surface</a>
+            </div>
+          </div>
+          <div class="footer-block">
+            <h4>Why this matters</h4>
+            <p>If the product grows into multiple public pages plus separate signed-in tools, this shared shell prevents the experience from feeling like unrelated fragments.</p>
+          </div>
+        </div>
+        <div class="footer-note">Admin status fallback: operator-facing, visually aligned with the public frontend, still intentionally separate from the public evaluation flow.</div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const apiBase = `${location.protocol}//${location.hostname}:3011`;
+    const endpoint = `${apiBase}/v1/admin/status`;
+
+    function fmtDate(value) {
+      if (!value) return '—';
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? value : d.toLocaleString();
+    }
+
+    function statusClass(status) {
+      if (status === 'succeeded' || status === 'active') return 'ok';
+      if (status === 'failed') return 'bad';
+      return 'warn';
+    }
+
+    function statusChip(label, status) {
+      return `<span class="status-chip ${statusClass(status)}">${label}</span>`;
+    }
+
+    async function loadStatus() {
+      document.getElementById('generated-at').textContent = `Loading from ${endpoint}`;
+      const response = await fetch(endpoint);
+      const json = await response.json();
+      const data = json.data;
+
+      document.getElementById('generated-at').textContent = `Generated: ${fmtDate(json.meta.generatedAt)}`;
+      document.getElementById('stat-sources').textContent = String(json.meta.totalSources);
+      document.getElementById('stat-active').textContent = String(data.sourceSummaries.filter((row) => row.status === 'active').length);
+      document.getElementById('stat-runs').textContent = String(json.meta.totalRecentRuns);
+      document.getElementById('stat-written').textContent = String(data.recentRuns.reduce((sum, row) => sum + row.recordsWritten, 0));
+
+      const sourcesBody = document.getElementById('sources-body');
+      if (!data.sourceSummaries.length) {
+        sourcesBody.innerHTML = '<tr><td colspan="5" class="empty">No source registry rows found.</td></tr>';
+      } else {
+        sourcesBody.innerHTML = data.sourceSummaries.map((row) => {
+          const latest = row.latestRun
+            ? `${statusChip(row.latestRun.status, row.latestRun.status)}<br><span class="muted">${fmtDate(row.latestRun.startedAt)}</span>`
+            : '<span class="muted">No runs yet</span>';
+
+          return `
+            <tr>
+              <td>
+                <strong>${row.sourceName}</strong><br>
+                <span class="muted">${row.sourceCode} · ${row.accessMethod}</span>
+              </td>
+              <td>${row.countryCode}</td>
+              <td>
+                ${statusChip(row.status, row.status)}<br>
+                <span class="muted">${row.licenseTag}</span>
+              </td>
+              <td>${latest}</td>
+              <td>
+                ${row.companiesCount} companies<br>
+                <span class="muted">${row.sourceRecordsCount} source records · ${row.ingestionRunsCount} runs</span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      const runsBody = document.getElementById('runs-body');
+      if (!data.recentRuns.length) {
+        runsBody.innerHTML = '<tr><td colspan="5" class="empty">No ingestion runs recorded yet.</td></tr>';
+      } else {
+        runsBody.innerHTML = data.recentRuns.map((row) => `
+          <tr>
+            <td>${fmtDate(row.startedAt || row.completedAt)}</td>
+            <td><strong>${row.sourceCode}</strong><br><span class="muted">${row.countryCode}</span></td>
+            <td>${row.runType}</td>
+            <td>
+              ${statusChip(row.status, row.status)}
+              ${row.errorMessage ? `<br><span style="color: var(--red);">${row.errorMessage}</span>` : ''}
+            </td>
+            <td>${row.recordsWritten} written<br><span class="muted">${row.recordsSeen} seen · ${row.recordsFailed} failed</span></td>
+          </tr>
+        `).join('');
+      }
+
+      const notesBody = document.getElementById('notes-body');
+      notesBody.innerHTML = data.notes.length
+        ? `<ul>${data.notes.map((note) => `<li>${note}</li>`).join('')}</ul>`
+        : '<div class="empty">No status notes.</div>';
+
+      document.getElementById('raw-json').textContent = JSON.stringify(json, null, 2);
+    }
+
+    async function refresh() {
+      try {
+        await loadStatus();
+      } catch (error) {
+        document.getElementById('generated-at').textContent = 'Failed to load admin status';
+        document.getElementById('sources-body').innerHTML = '<tr><td colspan="5" class="empty">Could not fetch status endpoint.</td></tr>';
+        document.getElementById('runs-body').innerHTML = '<tr><td colspan="5" class="empty">Could not fetch status endpoint.</td></tr>';
+        document.getElementById('notes-body').innerHTML = `<div class="empty">${error instanceof Error ? error.message : String(error)}</div>`;
+        document.getElementById('raw-json').textContent = JSON.stringify({
+          error: 'ADMIN_STATUS_LOAD_FAILED',
+          message: error instanceof Error ? error.message : String(error),
+          endpoint
+        }, null, 2);
+      }
+    }
+
+    document.getElementById('refresh').addEventListener('click', refresh);
+    refresh();
+  </script>
+</body>
+</html>

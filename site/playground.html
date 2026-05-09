@@ -1,0 +1,2159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Company Data API · Product, Docs, Pricing, Coverage & Demo</title>
+  <style>
+    :root {
+      --bg: #f3f7fa;
+      --bg-soft: #e9f0f6;
+      --panel: rgba(255, 255, 255, 0.94);
+      --panel-strong: rgba(255, 255, 255, 0.985);
+      --panel-soft: rgba(247, 250, 253, 0.96);
+      --text: #132033;
+      --muted: #617286;
+      --line: rgba(19, 32, 51, 0.08);
+      --line-strong: rgba(19, 32, 51, 0.14);
+      --accent: #2d74c4;
+      --accent-strong: #1d5fa9;
+      --accent-soft: rgba(45, 116, 196, 0.08);
+      --green: #2a9d6f;
+      --yellow: #b98916;
+      --red: #c75667;
+      --shadow: 0 28px 70px rgba(42, 69, 98, 0.10);
+      --shadow-soft: 0 14px 30px rgba(42, 69, 98, 0.06);
+      --radius: 28px;
+      --radius-md: 22px;
+      --radius-sm: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --nav-width: min(86vw, 320px);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(45, 116, 196, 0.12), transparent 24%),
+        radial-gradient(circle at 92% 2%, rgba(42, 157, 111, 0.07), transparent 20%),
+        linear-gradient(180deg, #f8fbfd 0%, #f3f7fa 38%, #edf3f8 100%);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    body.nav-open { overflow: hidden; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-strong); }
+    code, pre, textarea, input, select { font-family: var(--mono); }
+
+    .page {
+      max-width: 1460px;
+      margin: 0 auto;
+      padding: 16px 16px 44px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 0 16px;
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar-nav,
+    .topbar-actions {
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar-nav a {
+      color: #314b68;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 12px;
+      border-radius: 999px;
+    }
+
+    .topbar-nav a:hover {
+      background: rgba(45, 116, 196, 0.06);
+      color: var(--text);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+      box-shadow: 0 14px 28px rgba(45, 116, 196, 0.22);
+      flex: 0 0 auto;
+    }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.15;
+    }
+
+    .brand-copy span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .menu-button,
+    .button,
+    .ghost-button,
+    .copy-btn,
+    .run-btn,
+    .search-button,
+    .quick-link,
+    .nav-pill {
+      appearance: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font: inherit;
+      transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .menu-button:hover,
+    .button:hover,
+    .ghost-button:hover,
+    .copy-btn:hover,
+    .run-btn:hover,
+    .search-button:hover,
+    .quick-link:hover,
+    .nav-pill:hover {
+      transform: translateY(-1px);
+    }
+
+    .menu-button {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.84);
+      border-color: var(--line);
+      box-shadow: var(--shadow-soft);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      flex: 0 0 auto;
+    }
+
+    .menu-button svg,
+    .close-nav svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 55;
+      background: rgba(16, 24, 38, 0.28);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    body.nav-open .sidebar-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .layout {
+      display: grid;
+      gap: 18px;
+    }
+
+    .sidebar,
+    .hero,
+    .section,
+    .endpoint,
+    .panel,
+    .play-surface,
+    .footer-card,
+    .hero-note,
+    .search-shell,
+    .mobile-strip,
+    .band,
+    .mini-stat,
+    .result-card,
+    .surface-card,
+    .price-card,
+    .coverage-card,
+    .response-card,
+    .callout,
+    .proof-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 60;
+      width: var(--nav-width);
+      height: 100vh;
+      padding: 20px;
+      overflow: auto;
+      transform: translateX(calc(-100% - 20px));
+      transition: transform 0.28s ease;
+      border-radius: 0 28px 28px 0;
+      background: rgba(255, 255, 255, 0.98);
+    }
+
+    body.nav-open .sidebar { transform: translateX(0); }
+
+    .sidebar-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .close-nav {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(45, 116, 196, 0.05);
+      color: #36506d;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pill,
+    .eyebrow,
+    .badge,
+    .method,
+    .endpoint-chip,
+    .spot-chip,
+    .summary-chip,
+    .result-chip,
+    .plan-chip,
+    .nav-link,
+    .mobile-link,
+    .nav-pill,
+    .coverage-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    .pill,
+    .eyebrow,
+    .spot-chip,
+    .summary-chip,
+    .result-chip,
+    .plan-chip,
+    .badge,
+    .endpoint-chip,
+    .coverage-state {
+      text-transform: uppercase;
+    }
+
+    .pill {
+      padding: 7px 11px;
+      margin-bottom: 12px;
+      color: #29527f;
+      background: rgba(45, 116, 196, 0.08);
+      border: 1px solid rgba(45, 116, 196, 0.14);
+    }
+
+    .sidebar h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.12;
+    }
+
+    .sidebar p,
+    .small,
+    .muted,
+    td,
+    li,
+    .helper,
+    .field-help,
+    .endpoint p,
+    .section > p,
+    .hero p,
+    .search-subcopy,
+    .hero-note p,
+    .surface-card p,
+    .proof-card p,
+    .mini-stat p,
+    .price-card p,
+    .coverage-card p,
+    .response-card p {
+      color: var(--muted);
+    }
+
+    .sidebar .group {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .sidebar h2 {
+      margin: 0 0 12px;
+      font-size: 12px;
+      color: #30445f;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .nav-stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-link {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 11px 14px;
+      background: rgba(45, 116, 196, 0.04);
+      border: 1px solid transparent;
+      color: #314b68;
+      font-size: 13px;
+      letter-spacing: 0.03em;
+    }
+
+    .nav-link:hover,
+    .nav-link:focus-visible {
+      background: rgba(45, 116, 196, 0.09);
+      border-color: rgba(45, 116, 196, 0.14);
+      color: var(--text);
+      outline: none;
+    }
+
+    .nav-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .nav-pill {
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.72);
+      border-color: rgba(19, 32, 51, 0.08);
+      color: #284664;
+      font-weight: 600;
+    }
+
+    main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .hero,
+    .section,
+    .endpoint,
+    .play-surface {
+      padding: 22px 18px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::before,
+    .play-surface::before,
+    .band::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(45, 116, 196, 0.12), transparent 32%),
+        radial-gradient(circle at 100% 0%, rgba(42, 157, 111, 0.08), transparent 28%);
+    }
+
+    .hero > *,
+    .section > *,
+    .endpoint > *,
+    .play-surface > *,
+    .band > * { position: relative; z-index: 1; }
+
+    .eyebrow {
+      margin-bottom: 12px;
+      color: #537196;
+      font-weight: 700;
+    }
+
+    .hero h2 {
+      margin: 0 0 14px;
+      font-size: clamp(34px, 11vw, 68px);
+      line-height: 0.96;
+      letter-spacing: -0.055em;
+      max-width: 11ch;
+    }
+
+    .hero p {
+      margin: 0 0 18px;
+      font-size: 15px;
+      max-width: 60ch;
+    }
+
+    .hero-actions,
+    .chip-row,
+    .button-row,
+    .summary-chips,
+    .result-meta,
+    .plan-points,
+    .mobile-links,
+    .spot-row,
+    .quick-row,
+    .surface-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button,
+    .ghost-button,
+    .copy-btn,
+    .run-btn,
+    .search-button,
+    .quick-link {
+      border-radius: 15px;
+      padding: 12px 14px;
+    }
+
+    .button,
+    .search-button {
+      background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 16px 30px rgba(45, 116, 196, 0.20);
+    }
+
+    .ghost-button,
+    .copy-btn,
+    .run-btn,
+    .quick-link {
+      background: rgba(45, 116, 196, 0.06);
+      border-color: rgba(45, 116, 196, 0.14);
+      color: #244666;
+    }
+
+    .hero-grid,
+    .overview-grid,
+    .docs-grid,
+    .play-grid,
+    .fields,
+    .result-grid,
+    .surface-grid,
+    .pricing-grid,
+    .coverage-grid,
+    .response-grid,
+    .hero-note-grid,
+    .proof-grid,
+    .mini-stats,
+    .product-grid,
+    .desktop-strip,
+    .endpoint-grid,
+    .example-grid,
+    .two-up,
+    .stats,
+    .trust-strip,
+    .trust-grid,
+    .section-intro,
+    .cta-grid,
+    .footer-grid,
+    .hero-metrics {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr;
+    }
+
+    .search-shell {
+      padding: 14px;
+      margin: 18px 0 14px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .search-shell form { display: grid; gap: 12px; }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 62px;
+      padding: 8px 8px 8px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(19, 32, 51, 0.08);
+      background: rgba(247, 250, 253, 0.96);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    .search-icon {
+      width: 20px;
+      height: 20px;
+      color: #5e7490;
+      flex: 0 0 auto;
+    }
+
+    .search-bar input {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      font-family: var(--sans);
+      font-size: 15px;
+      color: var(--text);
+      box-shadow: none;
+    }
+
+    .search-bar input:focus { outline: none; }
+    .search-button { padding-inline: 18px; white-space: nowrap; flex: 0 0 auto; }
+    .search-subcopy { font-size: 13px; padding: 0 4px; }
+
+    .desktop-strip {
+      margin-top: 16px;
+      gap: 12px;
+    }
+
+    .band {
+      padding: 18px;
+      position: relative;
+    }
+
+    .band h4,
+    .surface-card h4,
+    .proof-card h4,
+    .mini-stat strong,
+    .price-card strong,
+    .coverage-card strong,
+    .response-card strong,
+    .hero-note strong,
+    .panel strong,
+    .stat strong {
+      color: var(--text);
+    }
+
+    .band h4,
+    .surface-card h4,
+    .proof-card h4 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .mobile-strip {
+      padding: 14px;
+      border-radius: 22px;
+      background: rgba(248, 251, 253, 0.94);
+    }
+
+    .mobile-strip strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .mobile-link,
+    .spot-chip,
+    .quick-link,
+    .coverage-state {
+      padding: 9px 13px;
+      background: rgba(45, 116, 196, 0.06);
+      border: 1px solid rgba(45, 116, 196, 0.12);
+      color: #32506d;
+      font-weight: 600;
+    }
+
+    .coverage-state.live {
+      color: var(--green);
+      border-color: rgba(42, 157, 111, 0.16);
+      background: rgba(42, 157, 111, 0.08);
+    }
+
+    .coverage-state.planned {
+      color: #8b6a18;
+      border-color: rgba(185, 137, 22, 0.16);
+      background: rgba(185, 137, 22, 0.08);
+    }
+
+    .card,
+    .panel,
+    .stat,
+    .callout,
+    .response-card,
+    .coverage-card,
+    .price-card,
+    .hero-note,
+    .surface-card,
+    .proof-card,
+    .mini-stat {
+      background: rgba(249, 251, 253, 0.94);
+      border: 1px solid rgba(19, 32, 51, 0.08);
+      border-radius: 22px;
+      box-shadow: none;
+      padding: 18px;
+    }
+
+    .section h3,
+    .endpoint h3,
+    .play-surface h3 {
+      margin: 0 0 10px;
+      font-size: clamp(26px, 7vw, 38px);
+      line-height: 1.06;
+      letter-spacing: -0.04em;
+    }
+
+    .section-intro {
+      align-items: start;
+      margin-bottom: 16px;
+    }
+
+    .section-intro p {
+      margin: 0;
+      max-width: 64ch;
+    }
+
+    .trust-strip {
+      padding: 18px;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow-soft);
+      align-items: center;
+    }
+
+    .trust-label {
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #63758b;
+      font-weight: 700;
+    }
+
+    .trust-grid {
+      gap: 12px;
+    }
+
+    .trust-item {
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(19, 32, 51, 0.06);
+      background: rgba(247, 250, 253, 0.96);
+      color: #203348;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .hero-metrics {
+      margin-top: 18px;
+    }
+
+    .metric-card {
+      padding: 16px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(19, 32, 51, 0.08);
+      background: rgba(248, 251, 253, 0.92);
+    }
+
+    .metric-card strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .metric-card span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .cta-surface {
+      background: linear-gradient(180deg, #16304a, #10263a);
+      color: white;
+      border-color: rgba(9, 19, 29, 0.2);
+    }
+
+    .cta-surface::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at top left, rgba(90, 153, 226, 0.24), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(42, 157, 111, 0.16), transparent 24%);
+    }
+
+    .cta-surface > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-surface p,
+    .cta-surface .muted,
+    .cta-surface .footer-note {
+      color: rgba(231, 239, 247, 0.82);
+    }
+
+    .cta-grid {
+      align-items: center;
+    }
+
+    .footer-grid {
+      margin-top: 18px;
+    }
+
+    .footer-block h4 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .footer-block ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+
+    .footer-block li + li {
+      margin-top: 6px;
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    .hero-note-grid .code-block { grid-column: 1 / -1; }
+
+    .badge,
+    .endpoint-chip,
+    .summary-chip,
+    .result-chip,
+    .plan-chip,
+    .spot-chip {
+      padding: 8px 12px;
+      border: 1px solid rgba(163, 184, 221, 0.14);
+      background: rgba(45, 116, 196, 0.05);
+      color: #314963;
+    }
+
+    .code-block {
+      overflow: hidden;
+      border-radius: 20px;
+      border: 1px solid rgba(19, 32, 51, 0.08);
+      background: linear-gradient(180deg, rgba(244, 248, 252, 0.98), rgba(237, 243, 248, 0.98));
+    }
+
+    .code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(163, 184, 221, 0.12);
+      color: #46617f;
+      font-size: 13px;
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      overflow: auto;
+      color: #21344d;
+      font-size: 13px;
+      line-height: 1.7;
+      background: transparent;
+    }
+
+    .method {
+      min-width: 64px;
+      justify-content: center;
+      padding: 7px 12px;
+      background: rgba(42, 157, 111, 0.12);
+      color: var(--green);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .path {
+      font-family: var(--mono);
+      font-size: 15px;
+      color: #172739;
+      word-break: break-all;
+    }
+
+    .endpoint-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+
+    .kv div:nth-child(odd) { color: #30445f; font-weight: 700; }
+    .kv div:nth-child(even) { color: var(--muted); margin-top: -4px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid rgba(163, 184, 221, 0.12);
+    }
+
+    th { color: #30445f; font-weight: 600; }
+
+    .callout {
+      margin-top: 16px;
+      background: rgba(185, 137, 22, 0.08);
+      border-color: rgba(185, 137, 22, 0.16);
+      color: #8c6a14;
+    }
+
+    .success { color: var(--green); }
+    .warning { color: var(--yellow); }
+    .danger { color: var(--red); }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 13px;
+      color: #30445f;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.94);
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    textarea { min-height: 124px; resize: vertical; }
+    .play-surface .panel { background: rgba(248, 251, 253, 0.9); }
+
+    .play-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(45, 116, 196, 0.05);
+      border: 1px solid rgba(163, 184, 221, 0.14);
+      color: #30445f;
+      font-size: 13px;
+    }
+
+    .output-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #5f7087;
+    }
+
+    .search-insights {
+      margin-top: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .search-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(19, 32, 51, 0.08);
+      background: rgba(245, 248, 251, 0.95);
+    }
+
+    .search-summary strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 15px;
+    }
+
+    .search-summary .muted { font-size: 13px; }
+    .result-list { display: grid; gap: 12px; }
+
+    .result-card {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(19, 32, 51, 0.08);
+      background: rgba(249, 251, 253, 0.94);
+      box-shadow: none;
+    }
+
+    .result-card h4 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    .result-grid {
+      gap: 8px 16px;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+
+    .result-grid div { color: var(--muted); }
+
+    .result-grid strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--text);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .empty-state {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px dashed rgba(163, 184, 221, 0.2);
+      background: rgba(245, 248, 251, 0.92);
+      color: var(--muted);
+    }
+
+    .footer-card {
+      padding: 18px 20px;
+      text-align: center;
+      color: #6a7c92;
+      font-size: 14px;
+    }
+
+    @media (min-width: 760px) {
+      .page { padding: 22px 22px 52px; }
+      .hero, .section, .endpoint, .play-surface { padding: 30px; }
+      .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .mini-stats,
+      .overview-grid,
+      .docs-grid,
+      .response-grid,
+      .coverage-grid,
+      .surface-grid,
+      .hero-note-grid,
+      .example-grid,
+      .two-up,
+      .fields,
+      .result-grid,
+      .proof-grid,
+      .product-grid,
+      .desktop-strip,
+      .trust-grid,
+      .hero-metrics,
+      .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pricing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .endpoint-grid,
+      .play-grid,
+      .section-intro,
+      .cta-grid { grid-template-columns: 1.05fr 0.95fr; }
+      .kv { grid-template-columns: 160px 1fr; gap: 10px 14px; }
+      .kv div:nth-child(even) { margin-top: 0; }
+      .topbar { padding-top: 4px; }
+    }
+
+    @media (min-width: 1120px) {
+      body { overflow: auto; }
+      .page { padding: 24px 24px 60px; }
+      .sidebar,
+      .sidebar-overlay,
+      .close-nav,
+      .mobile-strip,
+      .menu-button { display: none; }
+      .topbar {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 18px;
+        padding: 8px 18px;
+        margin-bottom: 8px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: var(--shadow-soft);
+      }
+      .topbar-nav,
+      .topbar-actions { display: flex; }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+      main { gap: 24px; }
+      .hero { padding: 36px; }
+      .hero-grid {
+        grid-template-columns: minmax(0, 1.18fr) minmax(360px, 0.82fr);
+        gap: 24px;
+        align-items: start;
+      }
+      .desktop-strip { grid-template-columns: 1.2fr 0.8fr; }
+      .product-grid { grid-template-columns: 1.15fr 0.85fr; align-items: start; }
+      .overview-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .surface-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .proof-grid,
+      .trust-grid,
+      .footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .hero-note-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hero-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">CD</div>
+        <div class="brand-copy">
+          <strong>Company Data API</strong>
+          <span>Product, docs, pricing, coverage & live demo</span>
+        </div>
+      </div>
+      <nav class="topbar-nav" aria-label="Desktop navigation">
+        <a href="#product">Product</a>
+        <a href="#docs">Docs</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#coverage">Coverage</a>
+        <a href="#playground">Demo</a>
+      </nav>
+      <div class="topbar-actions">
+        <a class="ghost-button" href="#docs">API docs</a>
+        <a class="button" href="#playground">Try demo</a>
+      </div>
+      <button class="menu-button" id="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+      </button>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar" id="site-nav" aria-label="Site navigation">
+        <div class="sidebar-head">
+          <div>
+            <div class="pill">Public surface · local MVP</div>
+            <h1>Company Data API</h1>
+            <p>A lighter nordic public frontend with a stronger desktop product story, clear sections, and the same working browser demo.</p>
+          </div>
+          <button class="close-nav" id="close-nav" type="button" aria-label="Close navigation">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+        </div>
+
+        <div class="group">
+          <h2>Public nav</h2>
+          <div class="nav-stack">
+            <a class="nav-link" href="#product">Product</a>
+            <a class="nav-link" href="#docs">Docs</a>
+            <a class="nav-link" href="#pricing">Pricing</a>
+            <a class="nav-link" href="#coverage">Coverage</a>
+            <a class="nav-link" href="#playground">Demo</a>
+          </div>
+        </div>
+
+        <div class="group">
+          <h2>Developer reference</h2>
+          <div class="nav-stack">
+            <a class="nav-link" href="#authentication">Authentication</a>
+            <a class="nav-link" href="#health">GET /health</a>
+            <a class="nav-link" href="#countries">GET /v1/meta/countries</a>
+            <a class="nav-link" href="#search">GET /v1/companies/search</a>
+            <a class="nav-link" href="#examples">Examples</a>
+            <a class="nav-link" href="#errors">Errors</a>
+          </div>
+        </div>
+
+        <div class="group">
+          <h2>Local MVP</h2>
+          <p class="small">Public site: <a href="http://192.168.86.23:3010">192.168.86.23:3010</a></p>
+          <p class="small" style="margin-top:8px;">API: <a href="http://192.168.86.23:3011">192.168.86.23:3011</a></p>
+          <p class="small" style="margin-top:8px;">This page focuses on evaluation only. Signed-in customer and operator tools are intentionally kept off the public front door.</p>
+        </div>
+      </aside>
+
+      <main>
+        <section class="hero" id="product">
+          <div class="hero-grid">
+            <div>
+              <span class="eyebrow">European company data infrastructure</span>
+              <h2>Search, evaluate, and test a real company data API from one public front door.</h2>
+              <p>
+                This page tells the product story first and keeps the MVP honest underneath: live demo, explicit coverage, concise docs entry, and indicative pricing. Customer account workflows and operator controls stay off the public surface.
+              </p>
+
+              <div class="search-shell">
+                <form action="#playground">
+                  <div class="search-bar">
+                    <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10.5 4a6.5 6.5 0 1 1 0 13a6.5 6.5 0 0 1 0-13Zm0 2a4.5 4.5 0 1 0 0 9a4.5 4.5 0 0 0 0-9Zm7.85 10.94 2.83 2.83-1.41 1.41-2.83-2.83 1.41-1.41Z"/></svg>
+                    <input type="text" value="Example" aria-label="Search example company query" readonly />
+                    <button class="search-button" type="submit">Open live demo</button>
+                  </div>
+                  <div class="search-subcopy">The demo below still hits the real local API. This top search box is just the faster path into a safe evaluation flow.</div>
+                </form>
+              </div>
+
+              <div class="hero-actions">
+                <a class="button" href="#playground">Try live demo</a>
+                <a class="ghost-button" href="#docs">Read docs</a>
+                <a class="ghost-button" href="#pricing">See pricing</a>
+              </div>
+
+              <div class="hero-metrics">
+                <div class="metric-card"><strong>2</strong><span>Countries currently enabled</span></div>
+                <div class="metric-card"><strong>3</strong><span>Verified public API routes documented here</span></div>
+                <div class="metric-card"><strong>1</strong><span>Shared auth header across <code>/v1</code> endpoints</span></div>
+                <div class="metric-card"><strong>Live</strong><span>Browser playground with raw JSON output</span></div>
+              </div>
+
+              <div class="chip-row" style="margin-top: 16px;">
+                <span class="badge">Base URL: <code>http://192.168.86.23:3011</code></span>
+                <span class="badge">Auth: <code>x-api-key</code></span>
+                <span class="badge">Demo key: <code>demo_live_123</code></span>
+                <span class="badge">Format: JSON</span>
+              </div>
+            </div>
+
+            <div class="hero-note-grid">
+              <div class="hero-note">
+                <strong>Stronger landing-page flow</strong>
+                <p>Hero, proof, product sections, coverage, pricing, and a closing CTA now read like a proper product surface instead of a thin docs wrapper.</p>
+              </div>
+              <div class="hero-note">
+                <strong>Truthful MVP posture</strong>
+                <p>No fake customer logos, no inflated country count, and no pretend compliance or uptime claims. The useful parts stay real.</p>
+              </div>
+              <div class="code-block">
+                <div class="code-head">
+                  <span>First request</span>
+                  <button class="copy-btn" data-copy="#quickstart-request">Copy</button>
+                </div>
+                <pre id="quickstart-request">curl -s "http://192.168.86.23:3011/v1/companies/search?q=Example&amp;limit=10" \
+  -H "x-api-key: demo_live_123"</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="desktop-strip">
+            <div class="band">
+              <h4>Built for fast technical evaluation</h4>
+              <p>Visitors can understand the shape of the product, inspect the request contract, and run a real query without getting bounced into internal tools too early.</p>
+              <div class="spot-row">
+                <span class="spot-chip">Search API</span>
+                <span class="spot-chip">Country catalogue</span>
+                <span class="spot-chip">Usage-led pricing</span>
+              </div>
+            </div>
+            <div class="mini-stats">
+              <div class="mini-stat"><strong>2 enabled countries</strong><p>Norway and the UK are the current live MVP markets.</p></div>
+              <div class="mini-stat"><strong>Live playground</strong><p>No mock terminal-only section replacing the real thing.</p></div>
+              <div class="mini-stat"><strong>Separate surfaces</strong><p>Public product evaluation stays distinct from signed-in and operator workflows.</p></div>
+              <div class="mini-stat"><strong>Safe public framing</strong><p>The public page stays focused on explanation, docs, pricing, coverage, and demo.</p></div>
+            </div>
+          </div>
+
+          <div class="mobile-strip" style="margin-top: 16px;">
+            <strong>Jump straight in</strong>
+            <div class="mobile-links">
+              <a class="mobile-link" href="#docs">Docs</a>
+              <a class="mobile-link" href="#pricing">Pricing</a>
+              <a class="mobile-link" href="#coverage">Coverage</a>
+              <a class="mobile-link" href="#playground">Demo</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="trust-strip" aria-label="Proof points">
+          <div>
+            <div class="trust-label">Why this page is useful</div>
+            <p class="muted" style="margin: 8px 0 0;">The imported landing page was strong on structure. This version keeps that structure, but uses honest proof from the current MVP instead of invented scale claims.</p>
+          </div>
+          <div class="trust-grid">
+            <div class="trust-item">Working browser demo</div>
+            <div class="trust-item">Real local API routes</div>
+            <div class="trust-item">Coverage split into live vs planned</div>
+          </div>
+        </section>
+
+        <section class="section" id="surface-map">
+          <span class="eyebrow">Platform shape</span>
+          <h3>The public front door stays public</h3>
+          <p>This surface is for product understanding and technical evaluation. Signed-in customer workflows and internal operator controls exist, but they stay intentionally behind separate surfaces instead of competing for attention here.</p>
+          <div class="surface-grid">
+            <article class="surface-card">
+              <h4>What belongs here</h4>
+              <p>Product explanation, coverage, pricing posture, docs entry, and a safe live demo that helps buyers and developers evaluate the API quickly.</p>
+            </article>
+            <article class="surface-card">
+              <h4>What does not</h4>
+              <p>API key management, billing operations, customer settings, ingestion runs, system health, and internal admin controls.</p>
+            </article>
+            <article class="surface-card">
+              <h4>Why that matters</h4>
+              <p>Visitors understand the offer faster when the public page avoids leaking signed-in and operator tasks into the top-level experience.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="capabilities">
+          <span class="eyebrow">Product</span>
+          <div class="section-intro">
+            <div>
+              <h3>What the MVP already communicates well</h3>
+            </div>
+            <p>This section borrows the feature-grid rhythm from the imported landing page, but stays inside the current scope: company search, coverage transparency, developer-friendly docs, and clear surface separation.</p>
+          </div>
+          <div class="surface-grid">
+            <article class="surface-card">
+              <h4>Search-first evaluation</h4>
+              <p>Prospects can jump from headline to live demo quickly, which fits the imported design’s engineer-first shape without losing the real playground.</p>
+            </article>
+            <article class="surface-card">
+              <h4>Predictable API contract</h4>
+              <p>Base URL, auth, routes, examples, and error shapes stay visible on the public page instead of being buried behind product copy.</p>
+            </article>
+            <article class="surface-card">
+              <h4>Truthful coverage posture</h4>
+              <p>Enabled countries and planned markets are separated clearly so visitors can trust what is ready now versus what is still roadmap.</p>
+            </article>
+            <article class="surface-card">
+              <h4>Pricing without overpromising</h4>
+              <p>The page signals commercial direction without dragging account setup, invoicing, or quota management into the public evaluation flow.</p>
+            </article>
+            <article class="surface-card">
+              <h4>Clean handoff to other surfaces</h4>
+              <p>Public, customer, and operator experiences remain distinct, which is stronger than collapsing every workflow into one front door.</p>
+            </article>
+            <article class="surface-card">
+              <h4>Safe MVP evaluation</h4>
+              <p>The live API base and demo stay accessible for real testing without turning the public page into a control panel.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="docs">
+          <span class="eyebrow">Docs</span>
+          <h3>Start with a small, predictable contract</h3>
+          <p>The docs stay tight: base URL, auth, working endpoints, examples, and response shape. Enough to reach a successful request in minutes.</p>
+          <div class="overview-grid">
+            <div class="panel">
+              <strong>1. Point at the local API</strong>
+              <p class="muted">Use <code>http://192.168.86.23:3011</code> as the base URL for this MVP.</p>
+            </div>
+            <div class="panel">
+              <strong>2. Send the demo key</strong>
+              <p class="muted">Authenticated routes require <code>x-api-key: demo_live_123</code>.</p>
+            </div>
+            <div class="panel">
+              <strong>3. Start with metadata or search</strong>
+              <p class="muted">List enabled countries first, then query seeded company rows by name, registration number, and country.</p>
+            </div>
+            <div class="panel">
+              <strong>4. Use the same paths in the demo</strong>
+              <p class="muted">The playground below uses the exact same routes shown in the examples.</p>
+            </div>
+          </div>
+
+          <div class="docs-grid" style="margin-top: 16px;">
+            <div class="code-block">
+              <div class="code-head"><span>cURL</span><button class="copy-btn" data-copy="#curl-example">Copy</button></div>
+              <pre id="curl-example">curl -s "http://192.168.86.23:3011/v1/meta/countries" \
+  -H "x-api-key: demo_live_123"</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-head"><span>JavaScript fetch</span><button class="copy-btn" data-copy="#js-example">Copy</button></div>
+              <pre id="js-example">const res = await fetch("http://192.168.86.23:3011/v1/companies/search?q=Example&amp;country=GB", {
+  headers: {
+    "x-api-key": "demo_live_123"
+  }
+});
+
+const json = await res.json();
+console.log(json);</pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="pricing">
+          <span class="eyebrow">Pricing</span>
+          <h3>Simple plans with room to scale</h3>
+          <p>This public page sets buying expectations cleanly. Checkout, invoices, and quota management belong in the customer dashboard, not here.</p>
+          <div class="pricing-grid">
+            <div class="price-card">
+              <strong>Free</strong>
+              <p class="muted">For evaluation, local testing, and early proof-of-concept work.</p>
+              <div class="plan-points">
+                <span class="plan-chip">100 requests / month</span>
+                <span class="plan-chip">5 requests / minute</span>
+                <span class="plan-chip">Search + metadata</span>
+              </div>
+            </div>
+            <div class="price-card">
+              <strong>Starter</strong>
+              <p class="muted">For internal tools, pilots, and first live integrations.</p>
+              <div class="plan-points">
+                <span class="plan-chip">10,000 requests / month</span>
+                <span class="plan-chip">60 requests / minute</span>
+                <span class="plan-chip">Search + lookup + VAT lookup</span>
+              </div>
+            </div>
+            <div class="price-card">
+              <strong>Growth</strong>
+              <p class="muted">For broader enrichment, heavier usage, and more operational workflows.</p>
+              <div class="plan-points">
+                <span class="plan-chip">100,000 requests / month</span>
+                <span class="plan-chip">300 requests / minute</span>
+                <span class="plan-chip">Changes + enrichment</span>
+              </div>
+            </div>
+          </div>
+          <div class="callout">Pricing is still indicative at MVP stage. Commercial direction is public; account and billing mechanics stay outside the public evaluation flow.</div>
+        </section>
+
+        <section class="section" id="coverage">
+          <span class="eyebrow">Coverage</span>
+          <h3>Coverage stays explicit</h3>
+          <p>Enabled countries are available now. Planned markets stay visible, but clearly marked, so roadmap never gets confused with current capability.</p>
+          <div class="product-grid">
+            <div class="coverage-grid">
+              <article class="coverage-card">
+                <strong>Norway</strong>
+                <p>Strongest initial live data source and current reference market for the MVP.</p>
+                <div class="quick-row">
+                  <span class="coverage-state live">NO · enabled</span>
+                  <span class="result-chip">source status: pilot</span>
+                </div>
+              </article>
+              <article class="coverage-card">
+                <strong>United Kingdom</strong>
+                <p>Enabled on the public surface and positioned as the next major live validation path.</p>
+                <div class="quick-row">
+                  <span class="coverage-state live">GB · enabled</span>
+                  <span class="result-chip">source status: pilot</span>
+                </div>
+              </article>
+              <article class="coverage-card">
+                <strong>Denmark</strong>
+                <p>Visible in the catalogue for roadmap context, but not active in the current MVP.</p>
+                <div class="quick-row">
+                  <span class="coverage-state planned">DK · planned</span>
+                </div>
+              </article>
+              <article class="coverage-card">
+                <strong>Finland</strong>
+                <p>Listed for direction and market planning, not yet enabled on the live surface.</p>
+                <div class="quick-row">
+                  <span class="coverage-state planned">FI · planned</span>
+                </div>
+              </article>
+            </div>
+            <div class="proof-grid">
+              <article class="proof-card">
+                <h4>Clear now vs later</h4>
+                <p>The public frontend distinguishes active coverage from roadmap items with explicit states and calmer visual cues.</p>
+              </article>
+              <article class="proof-card">
+                <h4>Useful to buyers</h4>
+                <p>Coverage reads like product capability, not internal backlog notes, which makes the page easier to trust.</p>
+              </article>
+              <article class="proof-card">
+                <h4>Useful to engineers</h4>
+                <p>The same countries also appear in the live metadata route, so product copy and demo behavior stay aligned.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="play-surface" id="playground">
+          <span class="eyebrow">Demo</span>
+          <div class="play-header">
+            <div>
+              <h3>Try the live local API in a safe public demo</h3>
+              <p class="muted">Pick a route, keep the default demo key, and inspect both raw JSON and formatted search output. The useful playground stays intact, but it is framed clearly as an evaluation demo rather than a full signed-in workflow.</p>
+            </div>
+            <div class="status-pill">Runs in-browser against <code>192.168.86.23:3011</code></div>
+          </div>
+
+          <div class="play-grid">
+            <div class="panel">
+              <div class="fields">
+                <div class="field">
+                  <label for="route-select">Endpoint</label>
+                  <select id="route-select">
+                    <option value="health">GET /health</option>
+                    <option value="countries">GET /v1/meta/countries</option>
+                    <option value="search" selected>GET /v1/companies/search</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="api-key">API key</label>
+                  <input id="api-key" value="demo_live_123" />
+                  <span class="field-help">Used for all <code>/v1</code> requests.</span>
+                </div>
+                <div class="field">
+                  <label for="query-input">Search query (<code>q</code>)</label>
+                  <input id="query-input" value="Example" placeholder="Example" />
+                </div>
+                <div class="field">
+                  <label for="country-input">Country filter</label>
+                  <select id="country-input">
+                    <option value="">Loading country catalogue…</option>
+                  </select>
+                  <span class="field-help" id="country-help">The filter is populated from <code>/v1/meta/countries</code> so labels stay in sync with the live MVP.</span>
+                </div>
+                <div class="field">
+                  <label for="limit-input">Limit</label>
+                  <input id="limit-input" type="number" min="1" max="50" value="10" />
+                </div>
+                <div class="field">
+                  <label for="request-url">Resolved request URL</label>
+                  <input id="request-url" readonly />
+                </div>
+              </div>
+
+              <div class="button-row" style="margin-top: 16px;">
+                <button class="run-btn" id="run-request">Run request</button>
+                <button class="ghost-button" id="load-search">Load search preset</button>
+                <button class="ghost-button" id="load-countries">Load countries preset</button>
+                <button class="ghost-button" id="load-health">Load health preset</button>
+              </div>
+
+              <div class="code-block" style="margin-top: 16px;">
+                <div class="code-head">
+                  <span>Generated fetch example</span>
+                  <button class="copy-btn" data-copy="#playground-request">Copy</button>
+                </div>
+                <pre id="playground-request"></pre>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="output-meta">
+                <span id="response-status">Status: waiting</span>
+                <span id="response-time">Time: —</span>
+                <span id="response-type">Content-Type: —</span>
+              </div>
+              <div class="code-block">
+                <div class="code-head">
+                  <span>Response body</span>
+                  <button class="copy-btn" data-copy="#playground-response">Copy</button>
+                </div>
+                <pre id="playground-response">Choose a preset or edit the fields, then run a request.</pre>
+              </div>
+
+              <div class="search-insights" id="search-insights">
+                <div class="search-summary" id="search-summary">
+                  <div>
+                    <strong>Search results will render here</strong>
+                    <div class="muted">Run the company search route to get a cleaner, product-style readout alongside the raw JSON.</div>
+                  </div>
+                  <div class="summary-chips">
+                    <span class="summary-chip">Human-readable summary</span>
+                    <span class="summary-chip">Country labels</span>
+                    <span class="summary-chip">Clear empty states</span>
+                  </div>
+                </div>
+                <div class="result-list" id="search-results"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="authentication">
+          <span class="eyebrow">Authentication</span>
+          <h3>One header, one demo key</h3>
+          <div class="two-up">
+            <div class="panel">
+              <strong>Header name</strong>
+              <p><code>x-api-key</code></p>
+            </div>
+            <div class="panel">
+              <strong>Demo key</strong>
+              <p><code>demo_live_123</code></p>
+            </div>
+          </div>
+          <div class="callout">
+            Requests without a valid key return <span class="danger">401 UNAUTHORIZED</span> with a JSON error body. The <code>/health</code> route is intentionally public.
+          </div>
+        </section>
+
+        <section class="endpoint" id="health">
+          <span class="eyebrow">Endpoint reference</span>
+          <h3>Health check</h3>
+          <div class="endpoint-grid">
+            <div class="panel">
+              <div class="endpoint-header">
+                <span class="method">GET</span>
+                <span class="path">/health</span>
+                <span class="endpoint-chip">No auth</span>
+              </div>
+              <p>Unauthenticated service heartbeat for uptime checks, smoke tests, and quick local verification.</p>
+              <div class="kv">
+                <div>Authentication</div><div>None</div>
+                <div>Response</div><div><code>status</code>, <code>service</code>, <code>timestamp</code></div>
+                <div>Use case</div><div>Monitoring, deployment checks, browser sanity tests</div>
+              </div>
+            </div>
+            <div class="code-block">
+              <div class="code-head"><span>Example response</span><button class="copy-btn" data-copy="#health-response">Copy</button></div>
+              <pre id="health-response">{
+  "status": "ok",
+  "service": "company-data-api",
+  "timestamp": "2026-05-04T19:10:00.000Z"
+}</pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="endpoint" id="countries">
+          <h3>List supported countries</h3>
+          <div class="endpoint-grid">
+            <div class="panel">
+              <div class="endpoint-header">
+                <span class="method">GET</span>
+                <span class="path">/v1/meta/countries</span>
+                <span class="endpoint-chip">Requires <code>x-api-key</code></span>
+              </div>
+              <p>Returns the current country catalogue for the MVP, including what is enabled now and what is only listed for roadmap context.</p>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>code</code></td><td>string</td><td>2-letter country code</td></tr>
+                  <tr><td><code>name</code></td><td>string</td><td>Display name</td></tr>
+                  <tr><td><code>enabled</code></td><td>boolean</td><td>Whether the MVP currently serves it</td></tr>
+                  <tr><td><code>sourceStatus</code></td><td>string</td><td><code>planned</code>, <code>pilot</code>, or <code>active</code></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="code-block">
+              <div class="code-head"><span>Example response</span><button class="copy-btn" data-copy="#countries-response">Copy</button></div>
+              <pre id="countries-response">{
+  "data": [
+    { "code": "NO", "name": "Norway", "enabled": true, "sourceStatus": "pilot" },
+    { "code": "GB", "name": "United Kingdom", "enabled": true, "sourceStatus": "pilot" },
+    { "code": "DK", "name": "Denmark", "enabled": false, "sourceStatus": "planned" },
+    { "code": "FI", "name": "Finland", "enabled": false, "sourceStatus": "planned" }
+  ],
+  "meta": {
+    "total": 4
+  }
+}</pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="endpoint" id="search">
+          <h3>Search companies</h3>
+          <div class="endpoint-grid">
+            <div class="panel">
+              <div class="endpoint-header">
+                <span class="method">GET</span>
+                <span class="path">/v1/companies/search</span>
+                <span class="endpoint-chip">Requires <code>x-api-key</code></span>
+              </div>
+              <p>Search seeded demo rows by company name or registration number, with optional country filtering.</p>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Query param</th>
+                    <th>Type</th>
+                    <th>Rules</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>q</code></td><td>string</td><td>Optional. 1–120 chars after trim.</td></tr>
+                  <tr><td><code>country</code></td><td>string</td><td>Optional. Must be a 2-letter code like <code>NO</code> or <code>GB</code>.</td></tr>
+                  <tr><td><code>limit</code></td><td>number</td><td>Optional. Integer from 1 to 50. Default <code>10</code>.</td></tr>
+                </tbody>
+              </table>
+              <div class="callout">
+                Search currently reads from seeded demo data. Example hits include <code>Nordic Data Example AS</code> and <code>Example Analytics Ltd</code>.
+              </div>
+            </div>
+            <div class="code-block">
+              <div class="code-head"><span>Example response</span><button class="copy-btn" data-copy="#search-response">Copy</button></div>
+              <pre id="search-response">{
+  "data": [
+    {
+      "id": "2b7d3a7f-1111-2222-3333-444444444444",
+      "countryCode": "GB",
+      "registrationNumber": "12345678",
+      "name": "Example Analytics Ltd",
+      "status": "active",
+      "source": "seed"
+    },
+    {
+      "id": "6a8c19dd-aaaa-bbbb-cccc-555555555555",
+      "countryCode": "NO",
+      "registrationNumber": "912345678",
+      "name": "Nordic Data Example AS",
+      "status": "active",
+      "source": "seed"
+    }
+  ],
+  "meta": {
+    "query": "Example",
+    "country": null,
+    "limit": 10,
+    "total": 2,
+    "placeholder": false
+  }
+}</pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="examples">
+          <span class="eyebrow">Examples</span>
+          <h3>Common request patterns</h3>
+          <div class="example-grid">
+            <div class="code-block">
+              <div class="code-head"><span>Search all demo companies</span><button class="copy-btn" data-copy="#ex-search-all">Copy</button></div>
+              <pre id="ex-search-all">curl -s "http://192.168.86.23:3011/v1/companies/search?q=Example" \
+  -H "x-api-key: demo_live_123"</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-head"><span>Search only UK companies</span><button class="copy-btn" data-copy="#ex-search-gb">Copy</button></div>
+              <pre id="ex-search-gb">curl -s "http://192.168.86.23:3011/v1/companies/search?q=Example&amp;country=GB&amp;limit=5" \
+  -H "x-api-key: demo_live_123"</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-head"><span>List country support</span><button class="copy-btn" data-copy="#ex-countries">Copy</button></div>
+              <pre id="ex-countries">curl -s "http://192.168.86.23:3011/v1/meta/countries" \
+  -H "x-api-key: demo_live_123"</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-head"><span>Check API health</span><button class="copy-btn" data-copy="#ex-health">Copy</button></div>
+              <pre id="ex-health">curl -s "http://192.168.86.23:3011/health"</pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="errors">
+          <span class="eyebrow">Error format</span>
+          <h3>Errors stay plain JSON and easy to debug</h3>
+          <div class="response-grid">
+            <div class="response-card">
+              <strong>401 unauthorized</strong>
+              <p>Returned when the request is missing the API key header or includes an invalid key.</p>
+              <div class="code-block" style="margin-top: 14px;">
+                <pre>{
+  "error": "UNAUTHORIZED",
+  "message": "Missing or invalid API key. Send x-api-key header."
+}</pre>
+              </div>
+            </div>
+            <div class="response-card">
+              <strong>400 bad request</strong>
+              <p>Returned when search query parameters do not satisfy validation rules.</p>
+              <div class="code-block" style="margin-top: 14px;">
+                <pre>{
+  "error": "BAD_REQUEST",
+  "message": "Invalid search query",
+  "details": {
+    "formErrors": [],
+    "fieldErrors": {
+      "limit": ["Number must be less than or equal to 50"]
+    }
+  }
+}</pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="notes">
+          <span class="eyebrow">MVP notes</span>
+          <h3>What this public surface intentionally does</h3>
+          <ul>
+            <li>Keeps the front door focused on product, docs, pricing, coverage, and demo.</li>
+            <li>Documents only routes verified in the current local API.</li>
+            <li>Leaves customer account workflows and operator controls outside the public front door.</li>
+            <li>Keeps the visual direction light, calm, and more credible on desktop.</li>
+          </ul>
+        </section>
+
+        <section class="section cta-surface" id="cta">
+          <div class="cta-grid">
+            <div>
+              <span class="eyebrow" style="color: rgba(231, 239, 247, 0.82);">Ready to test it?</span>
+              <h3 style="color: white;">Run a real request, then follow the right surface.</h3>
+              <p class="muted">The public page is for product understanding and fast evaluation. Start with docs or the demo here; signed-in customer workflows and operator controls stay intentionally separate.</p>
+              <div class="hero-actions" style="margin-top: 18px;">
+                <a class="button" href="#playground">Open demo</a>
+                <a class="ghost-button" href="#docs" style="color: white; border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.08);">Read docs</a>
+              </div>
+            </div>
+            <div class="panel" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12);">
+              <strong style="color: white;">Evaluation quick facts</strong>
+              <div class="footer-note">Public MVP: <a href="http://192.168.86.23:3010" style="color: white;">192.168.86.23:3010</a></div>
+              <div class="footer-note">API base: <a href="http://192.168.86.23:3011" style="color: white;">192.168.86.23:3011</a></div>
+              <div class="footer-note">Auth header: <code>x-api-key</code></div>
+              <div class="footer-note">Demo key: <code>demo_live_123</code></div>
+              <div class="footer-note">Current purpose: docs, pricing, coverage, and safe demo</div>
+            </div>
+          </div>
+
+          <div class="footer-grid">
+            <div class="footer-block">
+              <h4 style="color: white;">Product</h4>
+              <ul style="color: rgba(231, 239, 247, 0.82);">
+                <li><a href="#capabilities" style="color: white;">Capabilities</a></li>
+                <li><a href="#coverage" style="color: white;">Coverage</a></li>
+                <li><a href="#pricing" style="color: white;">Pricing</a></li>
+              </ul>
+            </div>
+            <div class="footer-block">
+              <h4 style="color: white;">Developers</h4>
+              <ul style="color: rgba(231, 239, 247, 0.82);">
+                <li><a href="#docs" style="color: white;">Docs</a></li>
+                <li><a href="#playground" style="color: white;">Playground</a></li>
+                <li><a href="#examples" style="color: white;">Examples</a></li>
+              </ul>
+            </div>
+            <div class="footer-block">
+              <h4 style="color: white;">Evaluation</h4>
+              <ul style="color: rgba(231, 239, 247, 0.82);">
+                <li><a href="#docs" style="color: white;">API docs</a></li>
+                <li><a href="#coverage" style="color: white;">Coverage</a></li>
+                <li><a href="#playground" style="color: white;">Demo playground</a></li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <div class="footer-card">Company Data API public MVP surface: focused on product explanation, docs, pricing, coverage, and a clearly labeled working demo.</div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://192.168.86.23:3011';
+
+    const routeSelect = document.getElementById('route-select');
+    const apiKeyInput = document.getElementById('api-key');
+    const queryInput = document.getElementById('query-input');
+    const countryInput = document.getElementById('country-input');
+    const countryHelp = document.getElementById('country-help');
+    const limitInput = document.getElementById('limit-input');
+    const requestUrlInput = document.getElementById('request-url');
+    const requestPreview = document.getElementById('playground-request');
+    const responsePreview = document.getElementById('playground-response');
+    const responseStatus = document.getElementById('response-status');
+    const responseTime = document.getElementById('response-time');
+    const responseType = document.getElementById('response-type');
+    const searchSummary = document.getElementById('search-summary');
+    const searchResults = document.getElementById('search-results');
+    const runButton = document.getElementById('run-request');
+    const menuToggle = document.getElementById('menu-toggle');
+    const closeNavButton = document.getElementById('close-nav');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    const controls = [routeSelect, apiKeyInput, queryInput, countryInput, limitInput];
+    let countryCatalog = [
+      { code: 'NO', name: 'Norway', enabled: true, sourceStatus: 'pilot' },
+      { code: 'GB', name: 'United Kingdom', enabled: true, sourceStatus: 'pilot' },
+      { code: 'DK', name: 'Denmark', enabled: false, sourceStatus: 'planned' },
+      { code: 'FI', name: 'Finland', enabled: false, sourceStatus: 'planned' }
+    ];
+
+    function setNavState(open) {
+      document.body.classList.toggle('nav-open', open);
+      if (menuToggle) {
+        menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+    }
+
+    function getConfig() {
+      return {
+        route: routeSelect.value,
+        apiKey: apiKeyInput.value.trim(),
+        q: queryInput.value.trim(),
+        country: countryInput.value.trim(),
+        limit: limitInput.value.trim()
+      };
+    }
+
+    function buildRequest(config) {
+      let path = '/health';
+      const headers = {};
+      const params = new URLSearchParams();
+
+      if (config.route === 'countries') {
+        path = '/v1/meta/countries';
+        headers['x-api-key'] = config.apiKey;
+      }
+
+      if (config.route === 'search') {
+        path = '/v1/companies/search';
+        headers['x-api-key'] = config.apiKey;
+        if (config.q) params.set('q', config.q);
+        if (config.country) params.set('country', config.country);
+        if (config.limit) params.set('limit', config.limit);
+      }
+
+      const query = params.toString();
+      const url = API_BASE + path + (query ? `?${query}` : '');
+
+      return { url, headers };
+    }
+
+    function getCountryMeta(code) {
+      return countryCatalog.find((entry) => entry.code === code) || null;
+    }
+
+    function getCountryLabel(code) {
+      const match = getCountryMeta(code);
+      return match ? `${match.name} (${match.code})` : code;
+    }
+
+    function renderCountryOptions(catalog) {
+      countryCatalog = Array.isArray(catalog) && catalog.length ? catalog : countryCatalog;
+      const current = countryInput.value;
+      const enabled = countryCatalog.filter((entry) => entry.enabled);
+      const disabled = countryCatalog.filter((entry) => !entry.enabled);
+      const fragments = ['<option value="">All enabled countries</option>'];
+
+      enabled.forEach((entry) => {
+        fragments.push(`<option value="${entry.code}">${entry.name} (${entry.code}) · live</option>`);
+      });
+
+      if (disabled.length) {
+        fragments.push('<optgroup label="Listed but not enabled">');
+        disabled.forEach((entry) => {
+          fragments.push(`<option value="${entry.code}">${entry.name} (${entry.code}) · ${entry.sourceStatus}</option>`);
+        });
+        fragments.push('</optgroup>');
+      }
+
+      countryInput.innerHTML = fragments.join('');
+      countryInput.value = countryCatalog.some((entry) => entry.code === current) ? current : '';
+      countryHelp.innerHTML = `Showing <strong>${enabled.length}</strong> enabled ${enabled.length === 1 ? 'country' : 'countries'} plus <strong>${disabled.length}</strong> listed for roadmap context.`;
+    }
+
+    function renderSearchPlaceholder(title, detail, chips = ['Human-readable summary', 'Country labels', 'Clear empty states']) {
+      searchSummary.innerHTML = `
+        <div>
+          <strong>${title}</strong>
+          <div class="muted">${detail}</div>
+        </div>
+        <div class="summary-chips">${chips.map((chip) => `<span class="summary-chip">${chip}</span>`).join('')}</div>
+      `;
+      searchResults.innerHTML = '';
+    }
+
+    function renderSearchResults(payload, config) {
+      const results = Array.isArray(payload?.data) ? payload.data : [];
+      const meta = payload?.meta || {};
+      const activeCountry = meta.country ? getCountryLabel(meta.country) : 'all enabled countries';
+      const queryLabel = meta.query || config.q || 'all demo companies';
+      const total = typeof meta.total === 'number' ? meta.total : results.length;
+
+      searchSummary.innerHTML = `
+        <div>
+          <strong>${total === 0 ? 'No matching companies' : `${total} matching compan${total === 1 ? 'y' : 'ies'}`}</strong>
+          <div class="muted">Query: <code>${queryLabel}</code> · Scope: <code>${activeCountry}</code> · Limit: <code>${meta.limit || config.limit || '—'}</code></div>
+        </div>
+        <div class="summary-chips">
+          <span class="summary-chip">${activeCountry}</span>
+          <span class="summary-chip">${total} returned</span>
+          <span class="summary-chip">Source: seeded demo data</span>
+        </div>
+      `;
+
+      if (!results.length) {
+        searchResults.innerHTML = `
+          <div class="empty-state">
+            No companies matched this search. Try a broader query like <code>Example</code>, remove the country filter, or raise the limit if you are testing denser datasets later.
+          </div>
+        `;
+        return;
+      }
+
+      searchResults.innerHTML = results.map((company) => `
+        <article class="result-card">
+          <h4>${company.name}</h4>
+          <div class="result-meta">
+            <span class="result-chip">${getCountryLabel(company.countryCode)}</span>
+            <span class="result-chip">Status: ${company.status}</span>
+            <span class="result-chip">Source: ${company.source}</span>
+          </div>
+          <div class="result-grid">
+            <div><strong>Registration number</strong>${company.registrationNumber}</div>
+            <div><strong>Company ID</strong>${company.id}</div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    async function fetchCountryCatalogue() {
+      const apiKey = apiKeyInput.value.trim();
+      if (!apiKey) {
+        renderCountryOptions(countryCatalog);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/v1/meta/countries`, {
+          headers: { 'x-api-key': apiKey }
+        });
+        if (!response.ok) throw new Error(`Country catalogue request failed with ${response.status}`);
+        const payload = await response.json();
+        if (Array.isArray(payload?.data) && payload.data.length) {
+          renderCountryOptions(payload.data);
+        } else {
+          renderCountryOptions(countryCatalog);
+        }
+      } catch {
+        renderCountryOptions(countryCatalog);
+      }
+    }
+
+    function updatePresetState() {
+      const { route, url, headers } = { ...getConfig(), ...buildRequest(getConfig()) };
+      const isHealth = route === 'health';
+      const isSearch = route === 'search';
+
+      queryInput.disabled = !isSearch;
+      countryInput.disabled = !isSearch;
+      limitInput.disabled = !isSearch;
+      apiKeyInput.disabled = isHealth;
+
+      requestUrlInput.value = url;
+
+      const fetchLines = [
+        `fetch(${JSON.stringify(url)}, ${headers && Object.keys(headers).length ? JSON.stringify({ headers }, null, 2) : '{}'})`,
+        '  .then((res) => res.json())',
+        '  .then((json) => console.log(json));'
+      ];
+
+      requestPreview.textContent = fetchLines.join('\n');
+
+      if (!isSearch) {
+        renderSearchPlaceholder('Search results are hidden for this route', 'Switch back to GET /v1/companies/search to see formatted company cards and a query summary.', ['Search route only', 'Raw JSON still shown', 'Docs and demo stay aligned']);
+      }
+    }
+
+    function setPreset(route) {
+      routeSelect.value = route;
+      if (route === 'health') {
+        queryInput.value = 'Example';
+        countryInput.value = '';
+        limitInput.value = '10';
+      }
+      if (route === 'countries') {
+        queryInput.value = 'Example';
+        countryInput.value = '';
+        limitInput.value = '10';
+      }
+      if (route === 'search') {
+        queryInput.value = 'Example';
+        countryInput.value = '';
+        limitInput.value = '10';
+      }
+      updatePresetState();
+    }
+
+    async function runRequest() {
+      const config = getConfig();
+      const { url, headers } = buildRequest(config);
+      const init = Object.keys(headers).length ? { headers } : {};
+
+      responseStatus.textContent = 'Status: loading…';
+      responseTime.textContent = 'Time: …';
+      responseType.textContent = 'Content-Type: …';
+      responsePreview.textContent = 'Running request...';
+      runButton.disabled = true;
+      runButton.textContent = 'Running…';
+
+      const started = performance.now();
+
+      try {
+        const response = await fetch(url, init);
+        const elapsed = Math.round(performance.now() - started);
+        const contentType = response.headers.get('content-type') || 'unknown';
+        const text = await response.text();
+
+        let formatted = text;
+        let parsedJson = null;
+        try {
+          parsedJson = JSON.parse(text);
+          formatted = JSON.stringify(parsedJson, null, 2);
+        } catch {}
+
+        responseStatus.textContent = `Status: ${response.status} ${response.statusText}`;
+        responseTime.textContent = `Time: ${elapsed} ms`;
+        responseType.textContent = `Content-Type: ${contentType}`;
+        responsePreview.textContent = formatted;
+
+        if (config.route === 'search') {
+          if (response.ok && parsedJson) {
+            renderSearchResults(parsedJson, config);
+          } else if (parsedJson?.message) {
+            renderSearchPlaceholder('Search request needs attention', parsedJson.message, ['Validation or auth issue', 'See raw JSON below', 'Adjust filters and retry']);
+          } else {
+            renderSearchPlaceholder('Search request failed', 'The response could not be rendered into result cards. Check the raw response body for details.', ['Search route only', 'Raw JSON preserved', 'Retry after adjusting inputs']);
+          }
+        }
+
+        if (config.route === 'countries' && response.ok && parsedJson?.data) {
+          renderCountryOptions(parsedJson.data);
+        }
+      } catch (error) {
+        const elapsed = Math.round(performance.now() - started);
+        responseStatus.textContent = 'Status: request failed';
+        responseTime.textContent = `Time: ${elapsed} ms`;
+        responseType.textContent = 'Content-Type: —';
+        responsePreview.textContent = JSON.stringify({
+          error: 'PLAYGROUND_REQUEST_FAILED',
+          message: error instanceof Error ? error.message : String(error)
+        }, null, 2);
+        if (config.route === 'search') {
+          renderSearchPlaceholder('Search request failed', error instanceof Error ? error.message : String(error), ['Network or CORS issue', 'Raw error captured', 'Check API availability']);
+        }
+      } finally {
+        runButton.disabled = false;
+        runButton.textContent = 'Run request';
+      }
+    }
+
+    controls.forEach((control) => control.addEventListener('input', updatePresetState));
+    routeSelect.addEventListener('change', updatePresetState);
+    apiKeyInput.addEventListener('change', fetchCountryCatalogue);
+    runButton.addEventListener('click', runRequest);
+
+    document.getElementById('load-search').addEventListener('click', () => setPreset('search'));
+    document.getElementById('load-countries').addEventListener('click', () => setPreset('countries'));
+    document.getElementById('load-health').addEventListener('click', () => setPreset('health'));
+
+    document.querySelectorAll('.copy-btn').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const selector = button.getAttribute('data-copy');
+        const target = selector ? document.querySelector(selector) : null;
+        if (!target) return;
+
+        const text = target.textContent || '';
+        try {
+          await navigator.clipboard.writeText(text);
+          const old = button.textContent;
+          button.textContent = 'Copied';
+          setTimeout(() => { button.textContent = old; }, 1200);
+        } catch {
+          const old = button.textContent;
+          button.textContent = 'Copy failed';
+          setTimeout(() => { button.textContent = old; }, 1200);
+        }
+      });
+    });
+
+    document.querySelectorAll('.sidebar a[href^="#"]').forEach((link) => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth < 1120) {
+          setNavState(false);
+        }
+      });
+    });
+
+    if (menuToggle) {
+      menuToggle.addEventListener('click', () => setNavState(true));
+    }
+    if (closeNavButton) {
+      closeNavButton.addEventListener('click', () => setNavState(false));
+    }
+    if (sidebarOverlay) {
+      sidebarOverlay.addEventListener('click', () => setNavState(false));
+    }
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        setNavState(false);
+      }
+    });
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 1120) {
+        setNavState(false);
+      }
+    });
+
+    renderCountryOptions(countryCatalog);
+    updatePresetState();
+    fetchCountryCatalogue();
+  </script>
+</body>
+</html>

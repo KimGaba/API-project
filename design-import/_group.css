@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --brand-50: #f5f7fa;
+  --brand-100: #e4e7eb;
+  --brand-200: #cbd2d9;
+  --brand-300: #9aa5b1;
+  --brand-400: #7b8794;
+  --brand-500: #616e7c;
+  --brand-600: #52606d;
+  --brand-700: #3e4c59;
+  --brand-800: #323f4b;
+  --brand-900: #1f2933;
+  --brand-950: #0f141a;
+
+  --accent-blue: #0052cc;
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.text-brand-900 { color: var(--brand-900); }
+.text-brand-800 { color: var(--brand-800); }
+.text-brand-500 { color: var(--brand-500); }
+.text-brand-400 { color: var(--brand-400); }
+.text-accent { color: var(--accent-blue); }
+
+.bg-brand-50 { background-color: var(--brand-50); }
+.bg-brand-900 { background-color: var(--brand-900); }
+.bg-accent { background-color: var(--accent-blue); }
+
+.border-brand-100 { border-color: var(--brand-100); }
+.border-brand-200 { border-color: var(--brand-200); }
+.border-brand-800 { border-color: var(--brand-800); }
+
+.hero-gradient {
+  background: linear-gradient(180deg, #ffffff 0%, var(--brand-50) 100%);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.code-block {
+  background-color: var(--brand-950);
+  color: #a0aec0;
+}
+.code-string { color: #9ae6b4; }
+.code-key { color: #63b3ed; }
+.code-number { color: #fbd38d; }

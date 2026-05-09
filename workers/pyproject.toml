@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "company-data-workers"
+version = "0.1.0"
+description = "Scaffolded ingestion workers for company data sources"
+requires-python = ">=3.12"
+dependencies = [
+  "requests==2.32.3",
+  "psycopg[binary]==3.2.9",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

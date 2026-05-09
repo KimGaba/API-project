@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+.nordic-admin {
+  --admin-bg: #0d1117;
+  --admin-panel: #161b22;
+  --admin-border: #30363d;
+  --admin-text: #c9d1d9;
+  --admin-text-muted: #8b949e;
+  --admin-accent: #58a6ff;
+  --admin-success: #238636;
+  --admin-warning: #d29922;
+  --admin-danger: #da3633;
+  --admin-table-hover: #1f242c;
+
+  font-family: 'Inter', sans-serif;
+  background-color: var(--admin-bg);
+  color: var(--admin-text);
+  min-height: 100dvh;
+}
+
+.nordic-admin .mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.nordic-admin .custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.nordic-admin .custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.nordic-admin .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--admin-border);
+  border-radius: 3px;
+}
+.nordic-admin .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-text-muted);
+}

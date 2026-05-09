@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Company Data API · Docs</title><link rel="stylesheet" href="./assets/site.css" /></head>
+<body data-page="docs"><div class="sidebar-overlay" id="sidebar-overlay"></div><div class="page"><header class="topbar"><div class="brand"><div class="brand-mark">CD</div><div class="brand-copy"><strong>Company Data API</strong><span>Base URL, auth, routes, examples and errors</span></div></div><nav class="topbar-nav"><a href="./" data-page-link="home">Home</a><a href="./product.html" data-page-link="product">Product</a><a href="./docs.html" data-page-link="docs">Docs</a><a href="./pricing.html" data-page-link="pricing">Pricing</a><a href="./coverage.html" data-page-link="coverage">Coverage</a><a href="./demo.html" data-page-link="demo">Demo</a></nav><div class="topbar-actions"><a class="ghost-button" href="./coverage.html">Coverage</a><a class="button" href="./demo.html">Try demo</a></div><button class="menu-button" id="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button></header><div class="layout"><aside class="sidebar" id="site-nav"><div class="sidebar-head"><div><div class="pill">Docs</div><h1>Small, predictable contract</h1><p>Enough to reach a successful request in minutes.</p></div><button class="close-nav" id="close-nav" type="button" aria-label="Close navigation"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg></button></div><div class="group"><h2>Pages</h2><div class="nav-stack"><a class="nav-link" href="./" data-page-link="home">Home</a><a class="nav-link" href="./product.html" data-page-link="product">Product</a><a class="nav-link" href="./docs.html" data-page-link="docs">Docs</a><a class="nav-link" href="./pricing.html" data-page-link="pricing">Pricing</a><a class="nav-link" href="./coverage.html" data-page-link="coverage">Coverage</a><a class="nav-link" href="./demo.html" data-page-link="demo">Demo</a></div></div></aside><main><section class="hero"><span class="eyebrow">Docs</span><h1 class="compact">Start with a small, predictable contract.</h1><p>Use <code>http://192.168.86.23:3011</code> as the base URL, send <code>x-api-key: demo_live_123</code> for authenticated routes, and start with metadata or search.</p><div class="hero-actions"><a class="button" href="./demo.html">Open demo</a><a class="ghost-button" href="./coverage.html">See supported countries</a></div></section><section class="section"><div class="overview-grid"><div class="panel"><strong>1. Point at the local API</strong><p class="muted">Base URL: <code>http://192.168.86.23:3011</code></p></div><div class="panel"><strong>2. Send the demo key</strong><p class="muted"><code>x-api-key: demo_live_123</code></p></div><div class="panel"><strong>3. Start small</strong><p class="muted">List countries first, then query seeded companies.</p></div><div class="panel"><strong>4. Use the same routes in demo</strong><p class="muted">The browser playground uses the exact same paths.</p></div></div><div class="docs-grid" style="margin-top:16px;"><div class="code-block"><div class="code-head"><span>cURL</span></div><pre>curl -s "http://192.168.86.23:3011/v1/meta/countries" \
+  -H "x-api-key: demo_live_123"</pre></div><div class="code-block"><div class="code-head"><span>JavaScript fetch</span></div><pre>const res = await fetch("http://192.168.86.23:3011/v1/companies/search?q=Example&country=GB", {
+  headers: { "x-api-key": "demo_live_123" }
+});
+
+const json = await res.json();
+console.log(json);</pre></div></div></section><section class="endpoint"><span class="eyebrow">Endpoint reference</span><h3>Health check</h3><div class="endpoint-grid"><div class="panel"><div class="endpoint-header"><span class="method">GET</span><span class="path">/health</span><span class="endpoint-chip">No auth</span></div><p>Unauthenticated service heartbeat for smoke tests and quick local verification.</p><div class="kv"><div>Response</div><div><code>status</code>, <code>service</code>, <code>timestamp</code></div><div>Use case</div><div>Monitoring and browser sanity tests</div></div></div><div class="code-block"><div class="code-head"><span>Example response</span></div><pre>{
+  "status": "ok",
+  "service": "company-data-api",
+  "timestamp": "2026-05-04T19:10:00.000Z"
+}</pre></div></div></section><section class="endpoint"><h3>List supported countries</h3><div class="endpoint-grid"><div class="panel"><div class="endpoint-header"><span class="method">GET</span><span class="path">/v1/meta/countries</span><span class="endpoint-chip">Requires <code>x-api-key</code></span></div><p>Returns the current country catalogue for the MVP.</p><table><thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>code</code></td><td>string</td><td>2-letter country code</td></tr><tr><td><code>name</code></td><td>string</td><td>Display name</td></tr><tr><td><code>enabled</code></td><td>boolean</td><td>Whether the MVP currently serves it</td></tr><tr><td><code>sourceStatus</code></td><td>string</td><td><code>planned</code>, <code>pilot</code>, or <code>active</code></td></tr></tbody></table></div><div class="code-block"><div class="code-head"><span>Example response</span></div><pre>{
+  "data": [
+    { "code": "NO", "name": "Norway", "enabled": true, "sourceStatus": "pilot" },
+    { "code": "GB", "name": "United Kingdom", "enabled": true, "sourceStatus": "pilot" }
+  ],
+  "meta": { "total": 4 }
+}</pre></div></div></section><section class="endpoint"><h3>Search companies</h3><div class="endpoint-grid"><div class="panel"><div class="endpoint-header"><span class="method">GET</span><span class="path">/v1/companies/search</span><span class="endpoint-chip">Requires <code>x-api-key</code></span></div><p>Search seeded demo rows by company name or registration number, with optional country filtering.</p><table><thead><tr><th>Query param</th><th>Type</th><th>Rules</th></tr></thead><tbody><tr><td><code>q</code></td><td>string</td><td>Optional. 1–120 chars after trim.</td></tr><tr><td><code>country</code></td><td>string</td><td>Optional. Must be a 2-letter code like <code>NO</code> or <code>GB</code>.</td></tr><tr><td><code>limit</code></td><td>number</td><td>Optional. Integer from 1 to 50. Default <code>10</code>.</td></tr></tbody></table><div class="callout">Search currently reads from seeded demo data. Example hits include <code>Nordic Data Example AS</code> and <code>Example Analytics Ltd</code>.</div></div><div class="code-block"><div class="code-head"><span>Example response</span></div><pre>{
+  "data": [
+    {
+      "countryCode": "GB",
+      "registrationNumber": "12345678",
+      "name": "Example Analytics Ltd",
+      "status": "active"
+    }
+  ],
+  "meta": {
+    "query": "Example",
+    "country": null,
+    "limit": 10,
+    "total": 2
+  }
+}</pre></div></div></section><section class="section"><span class="eyebrow">Errors</span><div class="response-grid"><div class="response-card"><strong>401 unauthorized</strong><p>Returned when the request is missing the API key header or includes an invalid key.</p><div class="code-block" style="margin-top: 14px;"><pre>{
+  "error": "UNAUTHORIZED",
+  "message": "Missing or invalid API key. Send x-api-key header."
+}</pre></div></div><div class="response-card"><strong>400 bad request</strong><p>Returned when search query parameters do not satisfy validation rules.</p><div class="code-block" style="margin-top: 14px;"><pre>{
+  "error": "BAD_REQUEST",
+  "message": "Invalid search query"
+}</pre></div></div></div></section></main></div></div><script src="./assets/site.js"></script></body></html>

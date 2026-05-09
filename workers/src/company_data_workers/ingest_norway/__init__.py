@@ -1,0 +1,1 @@
+"""Norway ingestion worker."""
