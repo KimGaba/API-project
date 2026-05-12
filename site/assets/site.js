@@ -34,4 +34,91 @@ function initSiteChrome(currentPage) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => initSiteChrome());
+async function postJson(url, payload) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data?.message || 'Request failed');
+  }
+
+  return data;
+}
+
+function initAuthForms() {
+  const signupForm = document.getElementById('signup-form');
+  const loginForm = document.getElementById('login-form');
+
+  if (signupForm) {
+    signupForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = document.getElementById('signup-message');
+      const formData = new FormData(signupForm);
+
+      if (message) {
+        message.textContent = 'Creating account...';
+        message.className = 'auth-message';
+      }
+
+      try {
+        await postJson('/auth/signup', {
+          displayName: formData.get('displayName') || null,
+          email: formData.get('email'),
+          password: formData.get('password')
+        });
+
+        if (message) {
+          message.textContent = 'Account created. You are now signed in.';
+          message.className = 'auth-message success';
+        }
+      } catch (error) {
+        if (message) {
+          message.textContent = error instanceof Error ? error.message : 'Signup failed';
+          message.className = 'auth-message error';
+        }
+      }
+    });
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = document.getElementById('login-message');
+      const formData = new FormData(loginForm);
+
+      if (message) {
+        message.textContent = 'Logging in...';
+        message.className = 'auth-message';
+      }
+
+      try {
+        await postJson('/auth/login', {
+          email: formData.get('email'),
+          password: formData.get('password')
+        });
+
+        if (message) {
+          message.textContent = 'Logged in successfully.';
+          message.className = 'auth-message success';
+        }
+      } catch (error) {
+        if (message) {
+          message.textContent = error instanceof Error ? error.message : 'Login failed';
+          message.className = 'auth-message error';
+        }
+      }
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initSiteChrome();
+  initAuthForms();
+});
