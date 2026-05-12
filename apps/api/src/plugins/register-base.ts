@@ -1,3 +1,4 @@
+import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import sensible from '@fastify/sensible';
 import type { FastifyInstance } from 'fastify';
@@ -6,6 +7,7 @@ import { recordUsageFromRequest } from '../services/usage-service.js';
 
 export async function registerBasePlugins(app: FastifyInstance) {
   await app.register(sensible);
+  await app.register(cookie);
   await app.register(cors, {
     origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN
   });
