@@ -34,8 +34,10 @@ function initSiteChrome(currentPage) {
   });
 }
 
+const apiOrigin = `${window.location.protocol}//${window.location.hostname}:3011`;
+
 async function postJson(url, payload) {
-  const response = await fetch(url, {
+  const response = await fetch(`${apiOrigin}${url}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
