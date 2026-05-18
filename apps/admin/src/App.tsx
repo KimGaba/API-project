@@ -1,22 +1,85 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type ReactNode, type CSSProperties, useEffect, useMemo, useState } from 'react';
 
-type Theme = 'light' | 'dark';
-
-type NavItemId =
-  | 'overview'
-  | 'customers'
-  | 'billing'
-  | 'data-pipelines'
-  | 'system-health';
-
-type NavItem = {
-  id: NavItemId;
-  label: string;
-  eyebrow: string;
-  title: string;
-  description: string;
-  group: 'Operations' | 'Platform';
+/* ── Inline SVG icons (no dep needed) ────────────────────── */
+const Icon = {
+  Grid: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+    </svg>
+  ),
+  Users: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  ),
+  CreditCard: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+    </svg>
+  ),
+  Database: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+    </svg>
+  ),
+  Refresh: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+    </svg>
+  ),
+  Server: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/>
+      <line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+    </svg>
+  ),
+  Terminal: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+    </svg>
+  ),
+  Settings: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  ),
+  Check: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  ),
+  X: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  ),
+  Alert: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+  ),
+  Plus: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  ),
+  Chevron: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+  ),
+  More: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+    </svg>
+  ),
 };
+
+/* ── Types ───────────────────────────────────────────────── */
+type NavId = 'overview' | 'customers' | 'billing' | 'data-pipelines' | 'system-health';
 
 type StatusTone = 'good' | 'warn' | 'neutral';
 
@@ -26,11 +89,7 @@ type AdminStatusResponse = {
     recentRuns?: RecentRun[];
     notes?: string[];
   };
-  meta?: {
-    generatedAt?: string;
-    totalSources?: number;
-    totalRecentRuns?: number;
-  };
+  meta?: { generatedAt?: string; totalSources?: number; totalRecentRuns?: number };
 };
 
 type AdminOverviewResponse = {
@@ -39,925 +98,705 @@ type AdminOverviewResponse = {
     usageOverview?: UsageOverview | null;
     databaseOverview?: DatabaseOverview | null;
   };
-  meta?: {
-    generatedAt?: string;
-    dataAvailable?: boolean;
-    fallbackReason?: string;
-    periodStart?: string;
-  };
+  meta?: { generatedAt?: string; dataAvailable?: boolean; fallbackReason?: string; periodStart?: string };
 };
 
 type BillingPlansResponse = {
   data?: BillingPlan[];
-  meta?: {
-    mode?: string;
-    checkoutConfigured?: boolean;
-    webhookConfigured?: boolean;
-  };
+  meta?: { mode?: string; checkoutConfigured?: boolean; webhookConfigured?: boolean };
 };
 
-type HealthResponse = {
-  status?: string;
-  service?: string;
-  timestamp?: string;
-};
+type HealthResponse = { status?: string; service?: string; timestamp?: string };
 
 type SourceSummary = {
-  sourceCode: string;
-  sourceName: string;
-  countryCode: string;
-  status: string;
-  licenseTag: string;
-  accessMethod: string;
-  commercialReuseAllowed: boolean;
-  updateCadence: string | null;
-  companiesCount: number;
-  sourceRecordsCount: number;
+  sourceCode: string; sourceName: string; countryCode: string; status: string;
+  licenseTag: string; accessMethod: string; commercialReuseAllowed: boolean;
+  updateCadence: string | null; companiesCount: number; sourceRecordsCount: number;
   ingestionRunsCount: number;
-  latestRun: {
-    status: string;
-    startedAt: string | null;
-    completedAt: string | null;
-    recordsSeen: number;
-    recordsWritten: number;
-    recordsFailed: number;
-  } | null;
+  latestRun: { status: string; startedAt: string | null; completedAt: string | null; recordsSeen: number; recordsWritten: number; recordsFailed: number } | null;
 };
 
 type RecentRun = {
-  id: string;
-  sourceCode: string;
-  sourceName: string;
-  countryCode: string;
-  runType: string;
-  status: string;
-  startedAt: string | null;
-  completedAt: string | null;
-  recordsSeen: number;
-  recordsWritten: number;
-  recordsFailed: number;
-  checkpoint: string | null;
-  errorMessage: string | null;
+  id: string; sourceCode: string; sourceName: string; countryCode: string; runType: string;
+  status: string; startedAt: string | null; completedAt: string | null;
+  recordsSeen: number; recordsWritten: number; recordsFailed: number;
+  checkpoint: string | null; errorMessage: string | null;
 };
 
-type BillingPlan = {
-  code: string;
-  displayName: string;
-  monthlyQuota: number;
-  rpmLimit: number;
-  notes?: string;
-};
+type BillingPlan = { code: string; displayName: string; monthlyQuota: number; rpmLimit: number; notes?: string };
 
 type CustomerSummary = {
-  id: string;
-  email: string;
-  name: string | null;
-  companyName: string | null;
-  countryCode: string | null;
-  defaultPlan: string;
-  status: string;
-  subscription: {
-    planName: string;
-    status: string | null;
-    monthlyQuota: number | null;
-    rpmLimit: number | null;
-  } | null;
-  activeApiKeys: number;
-  lastApiKeyUsedAt: string | null;
-  currentPeriodTotalRequests: number;
+  id: string; email: string; name: string | null; companyName: string | null; countryCode: string | null;
+  defaultPlan: string; status: string;
+  subscription: { planName: string; status: string | null; monthlyQuota: number | null; rpmLimit: number | null } | null;
+  activeApiKeys: number; lastApiKeyUsedAt: string | null; currentPeriodTotalRequests: number;
 };
 
 type UsageOverview = {
-  activeCustomers: number;
-  activeApiKeys: number;
-  currentPeriodTotalRequests: number;
-  currentPeriodSearchRequests: number;
-  currentPeriodLookupRequests: number;
-  currentPeriodChangesRequests: number;
-  usageEventCount: number;
-  latestUsageAt: string | null;
+  activeCustomers: number; activeApiKeys: number; currentPeriodTotalRequests: number;
+  currentPeriodSearchRequests: number; currentPeriodLookupRequests: number;
+  currentPeriodChangesRequests: number; usageEventCount: number; latestUsageAt: string | null;
 };
 
 type DatabaseOverview = {
-  companyCount: number;
-  ingestedCompanyCount: number;
-  seededCompanyCount: number;
-  addressCount: number;
-  activityCount: number;
-  sourceRecordCount: number;
-  latestCompanySourceAt: string | null;
+  companyCount: number; ingestedCompanyCount: number; seededCompanyCount: number;
+  addressCount: number; activityCount: number; sourceRecordCount: number; latestCompanySourceAt: string | null;
 };
 
-type LoadState = {
-  loading: boolean;
-  error: string | null;
-  lastUpdated: string | null;
-  apiReachable: boolean;
-};
+type LoadState = { loading: boolean; error: string | null; lastUpdated: string | null; apiReachable: boolean };
 
-type AlertItem = {
-  title: string;
-  detail: string;
-  tone: StatusTone;
-};
-
+/* ── Constants ───────────────────────────────────────────── */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3011';
 
-const navItems: NavItem[] = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    eyebrow: 'Mission control',
-    title: 'Operations triage overview',
-    description: 'Start here to spot what needs action now, then jump into the focused operator views.',
-    group: 'Operations'
-  },
-  {
-    id: 'customers',
-    label: 'Customers',
-    eyebrow: 'Accounts',
-    title: 'Customers',
-    description: 'Review account health, API access and which customers need follow-up.',
-    group: 'Operations'
-  },
-  {
-    id: 'billing',
-    label: 'Billing',
-    eyebrow: 'Revenue ops',
-    title: 'Billing',
-    description: 'Check plan coverage, quota fit and billing configuration gaps.',
-    group: 'Operations'
-  },
-  {
-    id: 'data-pipelines',
-    label: 'Data pipelines',
-    eyebrow: 'Ingestion & sources',
-    title: 'Data pipelines',
-    description: 'Track source health, recent runs and data freshness.',
-    group: 'Platform'
-  },
-  {
-    id: 'system-health',
-    label: 'System health',
-    eyebrow: 'Runtime & alerts',
-    title: 'System health',
-    description: 'Monitor runtime health, active alerts and fallback conditions.',
-    group: 'Platform'
-  }
+const NAV: { id: NavId; label: string; group: string; icon: keyof typeof Icon }[] = [
+  { id: 'overview',       label: 'Overview',       group: 'Dashboards',      icon: 'Grid'       },
+  { id: 'customers',      label: 'Customers & API', group: 'Dashboards',      icon: 'Users'      },
+  { id: 'billing',        label: 'Billing & MRR',  group: 'Dashboards',      icon: 'CreditCard' },
+  { id: 'data-pipelines', label: 'Data Pipelines',  group: 'Infrastructure',  icon: 'Database'   },
+  { id: 'system-health',  label: 'System Health',   group: 'Infrastructure',  icon: 'Server'     },
 ];
 
-const fallbackCustomerRows = [
-  {
-    name: 'Company Data Demo',
-    owner: 'demo@companydata.local',
-    plan: 'free',
-    usage: '0 / 1,000',
-    usageDetail: 'No live customer usage connected yet',
-    keys: '1 key',
-    lastSeen: 'Fallback row',
-    status: 'Healthy',
-    tone: 'neutral' as const,
-    action: 'Review onboarding',
-    note: 'Seeded local account row'
-  }
-];
+const fallbackCustomerRows = [{
+  name: 'Company Data Demo', owner: 'demo@companydata.local', plan: 'free',
+  usage: '0 / 1,000', usageDetail: 'No live customer usage connected yet',
+  keys: '1 key', lastSeen: '—', status: 'Healthy', tone: 'neutral' as const,
+  action: 'Review onboarding', note: 'Seeded local account row'
+}];
 
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('en-US').format(value);
+/* ── Helpers ─────────────────────────────────────────────── */
+function fmt(v: number) { return new Intl.NumberFormat('en-US').format(v); }
+function fmtC(v: number) { return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(v); }
+function fmtWhen(v: string | null | undefined) {
+  if (!v) return '—';
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return v;
+  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }).format(d) + ' UTC';
 }
-
-function formatCompact(value: number) {
-  return new Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    maximumFractionDigits: 1
-  }).format(value);
+function fmtDur(s: string | null, e: string | null) {
+  if (!s || !e) return 'In progress';
+  const ms = new Date(e).getTime() - new Date(s).getTime();
+  if (ms < 0) return '—';
+  const sec = Math.round(ms / 1000);
+  return `${Math.floor(sec / 60)}m ${String(sec % 60).padStart(2, '0')}s`;
 }
-
-function formatWhen(value: string | null | undefined) {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'UTC'
-  }).format(date) + ' UTC';
-}
-
-function formatDuration(startedAt: string | null, completedAt: string | null) {
-  if (!startedAt || !completedAt) return 'In progress';
-  const start = new Date(startedAt).getTime();
-  const end = new Date(completedAt).getTime();
-  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return '—';
-
-  const totalSeconds = Math.round((end - start) / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
-}
-
-function toneFromRunStatus(status: string): StatusTone {
-  if (status === 'succeeded' || status === 'completed' || status === 'healthy' || status === 'ok' || status === 'active') return 'good';
-  if (status === 'running' || status === 'partial' || status === 'degraded' || status === 'watch') return 'warn';
+function tone(status: string): StatusTone {
+  if (['succeeded','completed','healthy','ok','active'].includes(status)) return 'good';
+  if (['running','partial','degraded','watch'].includes(status)) return 'warn';
   return 'neutral';
 }
+function humanize(v: string) { return v.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
 
-function humanizeStatus(value: string) {
-  return value
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+/* ── Sub-components ──────────────────────────────────────── */
+function Badge({ label, t }: { label: string; t: StatusTone }) {
+  return <span className={`a-badge ${t === 'good' ? 'ok' : t === 'warn' ? 'warn' : ''}`}>{label}</span>;
 }
 
-function iconForSection(id: NavItemId) {
-  switch (id) {
-    case 'overview':
-      return '◫';
-    case 'customers':
-      return '◎';
-    case 'billing':
-      return '¤';
-    case 'data-pipelines':
-      return '⟳';
-    case 'system-health':
-      return '●';
-  }
+function StatusBadge({ status }: { status: string }) {
+  const s = status.toLowerCase();
+  const cls = (s === 'active' || s === 'healthy' || s === 'paid' || s === 'completed' || s === 'succeeded') ? 'ok'
+    : (s === 'syncing' || s === 'warning' || s === 'in progress' || s === 'partial' || s === 'running' || s === 'watch') ? 'warn'
+    : (s === 'suspended' || s === 'failed' || s === 'error' || s === 'degraded') ? 'danger'
+    : '';
+  return <span className={`a-badge ${cls}`}>{status}</span>;
 }
 
-function Panel({
-  title,
-  eyebrow,
-  action,
-  children,
-  className = ''
-}: {
-  title: string;
-  eyebrow?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
+function Card({ title, action, children, style }: {
+  title?: string; action?: ReactNode; children: ReactNode; style?: CSSProperties
 }) {
   return (
-    <section className={`panel ${className}`.trim()}>
-      <div className="panel-header">
-        <div>
-          {eyebrow ? <div className="eyebrow">{eyebrow}</div> : null}
-          <h3>{title}</h3>
+    <div className="a-card" style={style}>
+      {(title || action) && (
+        <div className="a-card-head">
+          {title && <span className="a-card-title">{title}</span>}
+          {action}
         </div>
-        {action ? <div className="panel-action">{action}</div> : null}
-      </div>
-      {children}
-    </section>
+      )}
+      <div className="a-card-body">{children}</div>
+    </div>
   );
 }
 
-function StatusBadge({ label, tone }: { label: string; tone: StatusTone }) {
-  return <span className={`status-badge ${tone}`}>{label}</span>;
-}
-
+/* ── Main App ────────────────────────────────────────────── */
 export default function App() {
-  const [active, setActive] = useState<NavItemId>('overview');
-  const [theme, setTheme] = useState<Theme>('light');
-  const [loadState, setLoadState] = useState<LoadState>({
-    loading: true,
-    error: null,
-    lastUpdated: null,
-    apiReachable: false
-  });
+  const [active, setActive] = useState<NavId>('overview');
+  const [load, setLoad] = useState<LoadState>({ loading: true, error: null, lastUpdated: null, apiReachable: false });
   const [adminStatus, setAdminStatus] = useState<AdminStatusResponse | null>(null);
   const [adminOverview, setAdminOverview] = useState<AdminOverviewResponse | null>(null);
   const [billingPlans, setBillingPlans] = useState<BillingPlansResponse | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [now, setNow] = useState(() => new Date());
 
-  const activeItem = useMemo(
-    () => navItems.find((item) => item.id === active) ?? navItems[0],
-    [active]
-  );
+  const activeNav = useMemo(() => NAV.find(n => n.id === active) ?? NAV[0], [active]);
 
   async function loadData() {
-    setLoadState((current) => ({ ...current, loading: true, error: null }));
-
+    setLoad(c => ({ ...c, loading: true, error: null }));
     try {
-      const [healthResponse, adminStatusResponse, adminOverviewResponse, plansResponse] = await Promise.allSettled([
+      const [hRes, asRes, aoRes, bpRes] = await Promise.allSettled([
         fetch(`${API_BASE_URL}/health`),
         fetch(`${API_BASE_URL}/v1/admin/status`),
         fetch(`${API_BASE_URL}/v1/admin/overview`),
         fetch(`${API_BASE_URL}/v1/billing/plans`)
       ]);
-
       let reachable = false;
-      let nextHealth: HealthResponse | null = null;
-      let nextAdminStatus: AdminStatusResponse | null = null;
-      let nextAdminOverview: AdminOverviewResponse | null = null;
-      let nextBilling: BillingPlansResponse | null = null;
-      const errors: string[] = [];
+      const errs: string[] = [];
+      let nextH: HealthResponse | null = null;
+      let nextAs: AdminStatusResponse | null = null;
+      let nextAo: AdminOverviewResponse | null = null;
+      let nextBp: BillingPlansResponse | null = null;
 
-      if (healthResponse.status === 'fulfilled' && healthResponse.value.ok) {
-        reachable = true;
-        nextHealth = (await healthResponse.value.json()) as HealthResponse;
-      } else {
-        errors.push('health');
-      }
+      if (hRes.status === 'fulfilled' && hRes.value.ok) { reachable = true; nextH = await hRes.value.json() as HealthResponse; } else errs.push('health');
+      if (asRes.status === 'fulfilled' && asRes.value.ok) { reachable = true; nextAs = await asRes.value.json() as AdminStatusResponse; } else errs.push('admin status');
+      if (aoRes.status === 'fulfilled' && aoRes.value.ok) { reachable = true; nextAo = await aoRes.value.json() as AdminOverviewResponse; } else errs.push('admin overview');
+      if (bpRes.status === 'fulfilled' && bpRes.value.ok) { reachable = true; nextBp = await bpRes.value.json() as BillingPlansResponse; } else errs.push('billing plans');
 
-      if (adminStatusResponse.status === 'fulfilled' && adminStatusResponse.value.ok) {
-        reachable = true;
-        nextAdminStatus = (await adminStatusResponse.value.json()) as AdminStatusResponse;
-      } else {
-        errors.push('admin status');
-      }
-
-      if (adminOverviewResponse.status === 'fulfilled' && adminOverviewResponse.value.ok) {
-        reachable = true;
-        nextAdminOverview = (await adminOverviewResponse.value.json()) as AdminOverviewResponse;
-      } else {
-        errors.push('admin overview');
-      }
-
-      if (plansResponse.status === 'fulfilled' && plansResponse.value.ok) {
-        reachable = true;
-        nextBilling = (await plansResponse.value.json()) as BillingPlansResponse;
-      } else {
-        errors.push('billing plans');
-      }
-
-      setHealth(nextHealth);
-      setAdminStatus(nextAdminStatus);
-      setAdminOverview(nextAdminOverview);
-      setBillingPlans(nextBilling);
-      setLoadState({
-        loading: false,
-        error: errors.length === 4 ? `Could not reach ${API_BASE_URL}. Using local fallback data.` : null,
-        lastUpdated: new Date().toISOString(),
-        apiReachable: reachable
-      });
-    } catch (error) {
-      setLoadState({
-        loading: false,
-        error: error instanceof Error ? error.message : 'Unknown loading error',
-        lastUpdated: new Date().toISOString(),
-        apiReachable: false
-      });
+      setHealth(nextH); setAdminStatus(nextAs); setAdminOverview(nextAo); setBillingPlans(nextBp);
+      setLoad({ loading: false, error: errs.length === 4 ? `Could not reach ${API_BASE_URL}. Showing fallback data.` : null, lastUpdated: new Date().toISOString(), apiReachable: reachable });
+    } catch (err) {
+      setLoad({ loading: false, error: err instanceof Error ? err.message : 'Load failed', lastUpdated: new Date().toISOString(), apiReachable: false });
     }
   }
 
+  useEffect(() => { void loadData(); }, []);
+  useEffect(() => { document.title = `CompanyData Ops · ${activeNav.label}`; }, [activeNav]);
   useEffect(() => {
-    void loadData();
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
   }, []);
 
-  useEffect(() => {
-    document.title = `Company Data Ops · ${activeItem.label}`;
-  }, [activeItem]);
-
-  const sourceSummaries = adminStatus?.data?.sourceSummaries ?? [];
-  const recentRuns = adminStatus?.data?.recentRuns ?? [];
+  /* ── Derived data ─────────────────────────────────────── */
+  const sources = adminStatus?.data?.sourceSummaries ?? [];
+  const runs = adminStatus?.data?.recentRuns ?? [];
   const adminNotes = adminStatus?.data?.notes ?? [];
   const plans = billingPlans?.data ?? [];
   const customers = adminOverview?.data?.customers ?? [];
-  const usageOverview = adminOverview?.data?.usageOverview ?? null;
-  const databaseOverview = adminOverview?.data?.databaseOverview ?? null;
+  const usageOv = adminOverview?.data?.usageOverview ?? null;
+  const dbOv = adminOverview?.data?.databaseOverview ?? null;
 
-  const activeSources = sourceSummaries.filter((row) => row.status === 'active').length;
-  const failedSourceRuns = sourceSummaries.filter((row) => row.latestRun?.status === 'failed').length;
-  const totalCompanies = databaseOverview?.companyCount ?? sourceSummaries.reduce((sum, row) => sum + row.companiesCount, 0);
-  const totalRecords = databaseOverview?.sourceRecordCount ?? sourceSummaries.reduce((sum, row) => sum + row.sourceRecordsCount, 0);
-  const writtenRecords = recentRuns.reduce((sum, row) => sum + row.recordsWritten, 0);
-  const failedRunRecords = recentRuns.reduce((sum, row) => sum + row.recordsFailed, 0);
-  const seenRecords = usageOverview?.currentPeriodTotalRequests ?? recentRuns.reduce((sum, row) => sum + row.recordsSeen, 0);
-  const failedRuns = recentRuns.filter((row) => row.status === 'failed').length;
-  const runningRuns = recentRuns.filter((row) => row.status === 'running').length;
-  const partialRuns = recentRuns.filter((row) => row.status === 'partial').length;
-  const latestCompletedRun = recentRuns.find((row) => row.completedAt);
-  const readinessPercent = Math.min(
-    100,
-    Math.max(18, Math.round(sourceSummaries.length > 0 ? (activeSources / Math.max(sourceSummaries.length, 1)) * 100 : 78))
-  );
+  const activeSources = sources.filter(s => s.status === 'active').length;
+  const failedRuns = runs.filter(r => r.status === 'failed').length;
+  const runningRuns = runs.filter(r => r.status === 'running').length;
+  const totalCompanies = dbOv?.companyCount ?? sources.reduce((a, s) => a + s.companiesCount, 0);
+  const latestRun = runs.find(r => r.completedAt);
 
-  const alertItems: AlertItem[] = [
-    ...(!loadState.apiReachable
-      ? [{ title: 'API not reachable', detail: `Admin is running in local fallback mode instead of reading ${API_BASE_URL}.`, tone: 'warn' as const }]
-      : []),
-    ...(failedRuns > 0
-      ? [{ title: 'Failed ingestion runs', detail: `${failedRuns} recent run(s) failed and need operator review.`, tone: 'warn' as const }]
-      : []),
-    ...(partialRuns > 0
-      ? [{ title: 'Partial ingestion outcomes', detail: `${partialRuns} recent run(s) completed partially. Check checkpoints and retry posture.`, tone: 'warn' as const }]
-      : []),
-    ...(failedRunRecords > 0
-      ? [{ title: 'Rejected records detected', detail: `${formatNumber(failedRunRecords)} records failed during recent ingestion runs.`, tone: 'warn' as const }]
-      : []),
-    ...(failedSourceRuns > 0
-      ? [{ title: 'Degraded integrations', detail: `${failedSourceRuns} source integration(s) show a failed latest run.`, tone: 'warn' as const }]
-      : []),
-    ...(!adminOverview?.meta?.dataAvailable
-      ? [{ title: 'Customer overview is fallback-backed', detail: adminOverview?.meta?.fallbackReason ?? 'The overview endpoint is not returning a DB-backed snapshot.', tone: 'neutral' as const }]
-      : []),
-    ...(!(billingPlans?.meta?.checkoutConfigured)
-      ? [{ title: 'Billing checkout not configured', detail: 'Plan data is visible, but checkout wiring is still incomplete for live billing operations.', tone: 'neutral' as const }]
-      : [])
-  ];
-
-  const adminStats = [
-    {
-      label: 'Active customers',
-      value: usageOverview ? String(usageOverview.activeCustomers) : customers.length > 0 ? String(customers.length) : '1',
-      detail: usageOverview
-        ? `${formatNumber(usageOverview.activeApiKeys)} active API keys this period`
-        : 'Falls back to local seeded rows when DB customer snapshot is unavailable'
-    },
-    {
-      label: 'Platform requests',
-      value: usageOverview ? formatCompact(usageOverview.currentPeriodTotalRequests) : recentRuns.length > 0 ? formatCompact(writtenRecords) : '0',
-      detail: usageOverview
-        ? `${formatNumber(usageOverview.usageEventCount)} usage events captured`
-        : 'Using ingestion-derived proxy metrics until usage counters are available'
-    },
-    {
-      label: 'Companies sources tracked',
-      value: totalCompanies > 0 ? formatCompact(totalCompanies) : '2',
-      detail: totalRecords > 0 ? `${formatCompact(totalRecords)} source records sources tracked` : 'Fallback-only local rows right now'
-    },
-    {
-      label: 'Freshest completed ingest',
-      value: latestCompletedRun?.completedAt ? formatWhen(latestCompletedRun.completedAt) : databaseOverview?.latestCompanySourceAt ? formatWhen(databaseOverview.latestCompanySourceAt) : '—',
-      detail: latestCompletedRun ? `${latestCompletedRun.sourceCode} · ${humanizeStatus(latestCompletedRun.status)}` : 'No completed ingest in current payload'
-    }
+  const kpis = [
+    { label: 'Active customers',  value: usageOv ? String(usageOv.activeCustomers) : String(customers.length || 1),        sub: usageOv ? `${fmt(usageOv.activeApiKeys)} active keys` : 'Seeded fallback', good: true },
+    { label: 'API calls (30d)',    value: usageOv ? fmtC(usageOv.currentPeriodTotalRequests) : runs.length > 0 ? fmtC(runs.reduce((a, r) => a + r.recordsWritten, 0)) : '0', sub: usageOv ? `${fmt(usageOv.usageEventCount)} events recorded` : 'Ingestion-derived proxy', good: true },
+    { label: 'Companies tracked', value: totalCompanies > 0 ? fmtC(totalCompanies) : '2',                                  sub: dbOv ? `${fmtC(dbOv.sourceRecordCount)} source records` : 'Fallback aggregate', good: true },
+    { label: 'Last ingest',       value: latestRun?.completedAt ? fmtWhen(latestRun.completedAt) : dbOv?.latestCompanySourceAt ? fmtWhen(dbOv.latestCompanySourceAt) : '—', sub: latestRun ? `${latestRun.sourceCode} · ${humanize(latestRun.status)}` : 'No completed run yet', good: false },
   ];
 
   const customerRows = customers.length > 0
-    ? customers
-        .map((row) => {
-          const planName = row.subscription?.planName ?? row.defaultPlan;
-          const monthlyQuota = row.subscription?.monthlyQuota;
-          const usageTotal = row.currentPeriodTotalRequests;
-          const quotaRatio = monthlyQuota && monthlyQuota > 0 ? usageTotal / monthlyQuota : null;
-          const isInactive = row.status !== 'active';
-          const hasNoKeys = row.activeApiKeys === 0;
-          const highUsage = quotaRatio !== null && quotaRatio >= 0.8;
-          const tone: StatusTone = isInactive || hasNoKeys || highUsage ? 'warn' : 'good';
-          const statusLabel = isInactive ? 'Watch' : highUsage ? 'High usage' : hasNoKeys ? 'Key gap' : 'Healthy';
+    ? customers.map(c => {
+        const planName = c.subscription?.planName ?? c.defaultPlan;
+        const quota = c.subscription?.monthlyQuota;
+        const usage = c.currentPeriodTotalRequests;
+        const ratio = quota && quota > 0 ? usage / quota : null;
+        const inactive = c.status !== 'active';
+        const noKeys = c.activeApiKeys === 0;
+        const highUsage = ratio !== null && ratio >= 0.8;
+        const t: StatusTone = inactive || noKeys || highUsage ? 'warn' : 'good';
+        return {
+          name: c.companyName || c.name || c.email, email: c.email,
+          plan: planName, usage: quota ? `${fmt(usage)} / ${fmt(quota)}` : `${fmt(usage)} calls`,
+          keys: `${c.activeApiKeys} key${c.activeApiKeys === 1 ? '' : 's'}`,
+          lastSeen: fmtWhen(c.lastApiKeyUsedAt),
+          status: inactive ? 'Watch' : highUsage ? 'High usage' : noKeys ? 'Key gap' : 'Healthy', tone: t,
+          joined: c.countryCode ?? '—',
+        };
+      }).sort((a, b) => (b.tone === 'warn' ? 1 : 0) - (a.tone === 'warn' ? 1 : 0) || a.name.localeCompare(b.name))
+    : fallbackCustomerRows.map(r => ({ name: r.name, email: r.owner, plan: r.plan, usage: r.usage, keys: r.keys, lastSeen: r.lastSeen, status: r.status, tone: r.tone, joined: '—' }));
 
-          return {
-            name: row.companyName || row.name || row.email,
-            owner: row.name || row.email,
-            plan: planName,
-            usage: monthlyQuota ? `${formatNumber(usageTotal)} / ${formatNumber(monthlyQuota)}` : `${formatNumber(usageTotal)} this month`,
-            usageDetail: row.subscription?.rpmLimit
-              ? `${formatNumber(row.subscription.rpmLimit)} rpm cap`
-              : 'Default rate limit',
-            keys: `${row.activeApiKeys} key${row.activeApiKeys === 1 ? '' : 's'}`,
-            lastSeen: formatWhen(row.lastApiKeyUsedAt),
-            status: statusLabel,
-            tone,
-            action: isInactive ? 'Check account state' : hasNoKeys ? 'Provision API key' : highUsage ? 'Review quota / upsell' : 'Monitor normally',
-            note: `${row.email} · ${row.countryCode ?? '—'}`
-          };
-        })
-        .sort((left, right) => {
-          const leftScore = (left.tone === 'warn' ? 1 : 0) + (left.status === 'High usage' ? 1 : 0);
-          const rightScore = (right.tone === 'warn' ? 1 : 0) + (right.status === 'High usage' ? 1 : 0);
-          return rightScore - leftScore || left.name.localeCompare(right.name);
-        })
-    : fallbackCustomerRows;
-
-  const customerAttentionRows = customerRows.filter((row) => row.tone !== 'good').slice(0, 4);
-
-  const billingRows = customers.length > 0
-    ? customers.slice(0, 6).map((customer) => ({
-        account: customer.companyName || customer.email,
-        issue: customer.subscription
-          ? `${humanizeStatus(customer.subscription.status ?? 'unknown')} subscription · quota ${customer.subscription.monthlyQuota ? formatNumber(customer.subscription.monthlyQuota) : 'custom'}`
-          : `No subscription row yet · default ${customer.defaultPlan}`,
-        amount: customer.subscription?.rpmLimit ? `${formatNumber(customer.subscription.rpmLimit)} rpm` : 'Manual / default',
-        action: customer.subscription ? humanizeStatus(customer.subscription.planName) : 'Needs subscription wiring'
-      }))
-    : plans.length > 0
-      ? plans.slice(0, 4).map((plan) => ({
-          account: plan.displayName,
-          issue: plan.notes ?? `${formatNumber(plan.monthlyQuota)} monthly requests`,
-          amount: plan.code === 'free' ? 'Free tier' : `${formatNumber(plan.rpmLimit)} rpm`,
-          action: plan.code === 'enterprise' ? 'Manual review path' : 'Config present'
-        }))
-      : [
-          { account: 'Starter', issue: 'Plan shell is present locally', amount: '60 rpm', action: 'Needs live wiring' },
-          { account: 'Growth', issue: 'Higher-volume default option', amount: '300 rpm', action: 'Needs live wiring' },
-          { account: 'Enterprise', issue: 'Contract / manual path', amount: 'Custom', action: 'Operator-managed' }
-        ];
-
-  const sourceRows = sourceSummaries.length > 0
-    ? sourceSummaries.map((row) => ({
-        source: `${row.countryCode} · ${row.sourceName}`,
-        status: row.latestRun?.status === 'failed' ? 'Degraded' : row.status === 'active' ? 'Healthy' : 'Watch',
-        detail: `${row.accessMethod} · ${row.licenseTag}`,
-        freshness: formatWhen(row.latestRun?.completedAt ?? row.latestRun?.startedAt),
-        records: row.sourceRecordsCount > 0 ? formatCompact(row.sourceRecordsCount) : '—'
-      }))
+  const sourceRows = sources.length > 0
+    ? sources.map(s => ({ name: `${s.countryCode} · ${s.sourceName}`, status: s.latestRun?.status === 'failed' ? 'Degraded' : s.status === 'active' ? 'Active' : 'Watch', updated: fmtWhen(s.latestRun?.completedAt ?? s.latestRun?.startedAt), records: s.sourceRecordsCount > 0 ? fmtC(s.sourceRecordsCount) : '—' }))
     : [
-        { source: 'NO · Norway registry', status: 'Healthy', detail: 'Public endpoint · delta sync enabled', freshness: '17m ago', records: '740k' },
-        { source: 'UK · Companies House', status: 'Degraded', detail: 'API key needed for full live run', freshness: '2h ago', records: '310k' },
-        { source: 'Seed fixtures', status: 'Watch', detail: 'Fallback dataset only', freshness: 'Static', records: '180k' }
+        { name: 'CVR', status: 'Active', updated: '2 min ago', records: '924K' },
+        { name: 'Bolagsverket', status: 'Active', updated: '15 min ago', records: '1.2M' },
+        { name: 'KVK', status: 'Watch', updated: 'Syncing (45%)', records: '2.1M' },
+        { name: 'Handelsregister', status: 'Degraded', updated: '4 hours ago', records: '3.8M' },
+        { name: 'Companies House', status: 'Active', updated: '1 min ago', records: '5.2M' },
       ];
 
-  const runRows = recentRuns.length > 0
-    ? recentRuns.slice(0, 6).map((row) => ({
-        run: `${row.sourceCode}-${row.runType}-${row.id.slice(0, 8)}`,
-        source: row.sourceName,
-        result: humanizeStatus(row.status),
-        records: formatNumber(row.recordsWritten),
-        duration: formatDuration(row.startedAt, row.completedAt),
-        checkpoint: row.checkpoint ?? '—'
-      }))
+  const runRows = runs.length > 0
+    ? runs.slice(0, 6).map(r => ({ source: r.sourceName, started: fmtWhen(r.startedAt), duration: fmtDur(r.startedAt, r.completedAt), records: fmt(r.recordsWritten), status: humanize(r.status) }))
     : [
-        { run: 'NO-delta-2026-05-05-07:58', source: 'Norway registry', result: 'Completed', records: '12,482', duration: '11m 08s', checkpoint: 'company:11482' },
-        { run: 'UK-backfill-2026-05-05-03:10', source: 'Companies House', result: 'Partial', records: '84,229', duration: '52m 44s', checkpoint: 'chunk:84' },
-        { run: 'seed-refresh-2026-05-04-22:12', source: 'Seed fixtures', result: 'Completed', records: '2,400', duration: '00m 31s', checkpoint: 'done' }
+        { source: 'KVK (NL)', started: '10:15 AM', duration: 'In progress', records: '145,000', status: 'Syncing' },
+        { source: 'CVR (DK)', started: '09:00 AM', duration: '14m 22s', records: '12,450', status: 'Completed' },
+        { source: 'Companies House (UK)', started: '08:30 AM', duration: '45m 10s', records: '84,200', status: 'Completed' },
+        { source: 'Handelsregister (DE)', started: '06:00 AM', duration: '2m 14s', records: '0', status: 'Failed' },
       ];
-
-  const databaseRows = [
-    {
-      metric: 'Total companies',
-      value: totalCompanies > 0 ? formatNumber(totalCompanies) : '2',
-      note: databaseOverview ? 'Current local companies table count' : 'Fallback or source-summary aggregate'
-    },
-    {
-      metric: 'Ingested vs seeded',
-      value: databaseOverview ? `${formatNumber(databaseOverview.ingestedCompanyCount)} / ${formatNumber(databaseOverview.seededCompanyCount)}` : '—',
-      note: databaseOverview ? 'Ingested companies first, seeded rows second' : 'Needs database overview endpoint'
-    },
-    {
-      metric: 'Related rows',
-      value: databaseOverview ? `${formatNumber(databaseOverview.addressCount)} addr · ${formatNumber(databaseOverview.activityCount)} acts` : '—',
-      note: 'Address and activity table coverage in the local DB'
-    },
-    {
-      metric: 'Latest source-backed company update',
-      value: databaseOverview?.latestCompanySourceAt ? formatWhen(databaseOverview.latestCompanySourceAt) : latestCompletedRun?.completedAt ? formatWhen(latestCompletedRun.completedAt) : '—',
-      note: databaseOverview ? 'Uses companies.latest_source_record_at' : 'Fallback to recent ingestion run'
-    }
-  ];
 
   const statusChecks = [
-    {
-      service: 'API',
-      state: health?.status === 'ok' ? 'Healthy' : loadState.apiReachable ? 'Watch' : 'Offline',
-      note: health?.service ? `${health.service} · ${formatWhen(health.timestamp)}` : `Expected on ${API_BASE_URL}`
-    },
-    {
-      service: 'Admin app',
-      state: 'Healthy',
-      note: 'Legacy admin app on :3013 (deprecated) with local fallback rendering; use :3014 for the canonical internal surface.'
-    },
-    {
-      service: 'Admin overview',
-      state: adminOverview?.meta?.dataAvailable ? 'Healthy' : 'Watch',
-      note: adminOverview?.meta?.dataAvailable
-        ? `DB-backed snapshot for period ${adminOverview.meta.periodStart}`
-        : adminOverview?.meta?.fallbackReason ?? 'Overview unavailable, falling back locally'
-    },
-    {
-      service: 'Billing plans',
-      state: billingPlans?.meta?.checkoutConfigured ? 'Healthy' : 'Watch',
-      note: billingPlans?.meta
-        ? `${billingPlans.meta.mode} mode · webhook ${billingPlans.meta.webhookConfigured ? 'configured' : 'not configured'}`
-        : 'Awaiting billing plan endpoint'
-    },
-    {
-      service: 'Ingestion worker',
-      state: failedRuns > 0 ? 'Watch' : 'Healthy',
-      note: failedRuns > 0 ? `${failedRuns} recent failed run(s) need operator review` : 'No failed runs in current admin payload'
-    }
+    { service: 'API Gateway', meta: health?.status === 'ok' ? 'p95: healthy' : `Expected on ${API_BASE_URL}`, status: health?.status === 'ok' ? 'Healthy' : load.apiReachable ? 'Watch' : 'Offline' },
+    { service: 'Database (Primary)', meta: dbOv ? `${fmt(dbOv.companyCount)} companies` : 'load: unknown', status: dbOv ? 'Healthy' : 'Watch' },
+    { service: 'Ingestion Workers', meta: runningRuns > 0 ? `${runningRuns} run(s) active` : failedRuns > 0 ? `${failedRuns} failed` : 'idle', status: failedRuns > 0 ? 'Degraded' : runningRuns > 0 ? 'Active' : 'Idle' },
+    { service: 'Admin overview', meta: adminOverview?.meta?.dataAvailable ? 'DB-backed snapshot' : (adminOverview?.meta?.fallbackReason ?? 'Fallback mode'), status: adminOverview?.meta?.dataAvailable ? 'Healthy' : 'Watch' },
+    { service: 'Billing', meta: billingPlans?.meta?.checkoutConfigured ? 'Checkout configured' : 'Checkout not wired', status: billingPlans?.meta?.checkoutConfigured ? 'Healthy' : 'Watch' },
   ];
 
-  const logEvents = [
+  const logLines = [
     ...(adminNotes.length > 0 ? adminNotes : []),
-    ...(adminOverview?.meta?.dataAvailable
-      ? ['Customer and usage snapshot is coming from the local database.']
-      : [adminOverview?.meta?.fallbackReason ?? 'Admin overview endpoint not available; embedded local fallback is active.'])
-  ].slice(0, 6);
+    ...(adminOverview?.meta?.dataAvailable ? ['Customer snapshot is live from local database.'] : [adminOverview?.meta?.fallbackReason ?? 'Admin overview not available — fallback active.']),
+  ].slice(0, 8);
 
-  const activityFeed = [
-    `${loadState.apiReachable ? 'Live admin data connected' : 'Fallback mode active'} · ${loadState.lastUpdated ? formatWhen(loadState.lastUpdated) : 'Awaiting first load'}`,
-    `${runningRuns > 0 ? `${runningRuns} ingestion run(s) in progress` : 'No in-progress ingestion jobs right now'}`,
-    `${usageOverview ? `${formatNumber(usageOverview.currentPeriodSearchRequests)} search requests recorded this period` : 'Usage section falls back to ingestion-derived operator signals when counters are absent'}`,
-    `${sourceSummaries.length > 0 ? `${activeSources}/${sourceSummaries.length} integrations currently active` : 'Integration readiness is using embedded fallback rows'}`
-  ];
+  const billingRows = customers.length > 0
+    ? customers.slice(0, 5).map(c => ({
+        account: c.companyName || c.email,
+        plan: c.subscription?.planName ?? c.defaultPlan,
+        amount: c.subscription?.rpmLimit ? `${fmt(c.subscription.rpmLimit)} rpm` : 'Default',
+        status: humanize(c.subscription?.status ?? 'no subscription'),
+      }))
+    : plans.slice(0, 4).map(p => ({
+        account: p.displayName,
+        plan: p.notes ?? `${fmt(p.monthlyQuota)} req/mo`,
+        amount: p.code === 'free' ? 'Free' : `${fmt(p.rpmLimit)} rpm`,
+        status: p.code === 'enterprise' ? 'Manual path' : 'Config present',
+      }));
 
-
-  const groupedNav = navItems.reduce<Record<string, NavItem[]>>((acc, item) => {
-    acc[item.group] ??= [];
-    acc[item.group].push(item);
+  /* ── Nav groups ───────────────────────────────────────── */
+  const navGroups = NAV.reduce<Record<string, typeof NAV>>((acc, n) => {
+    (acc[n.group] ??= []).push(n);
     return acc;
   }, {});
 
-  return (
-    <div className="admin-app" data-theme={theme}>
-      <aside className="admin-sidebar">
-        <div className="brand-block">
-          <div className="brand-mark">CD</div>
-          <div>
-            <div className="brand-title">Company Data Ops</div>
-            <p className="brand-copy">Operator console for customer follow-up, billing review, pipeline checks and runtime health.</p>
+  const utcTime = now.toISOString().slice(11, 19);
+
+  /* ── Tab renderers ────────────────────────────────────── */
+  function renderOverview() {
+    return (
+      <div className="a-overview">
+        {/* KPI row */}
+        <div className="a-kpi-grid">
+          {kpis.map(k => (
+            <div className="a-kpi" key={k.label}>
+              <div className="a-kpi-label">{k.label}</div>
+              <div className="a-kpi-value">{k.value}</div>
+              <div className={`a-kpi-sub ${k.good ? '' : 'neutral'}`}>{k.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Customer table */}
+        <Card title="Customer Overview" action={
+          <button className="a-card-action">
+            <Icon.Plus /> New Customer
+          </button>
+        }>
+          <table className="a-table">
+            <thead>
+              <tr>
+                <th>Customer / Company</th>
+                <th>Plan</th>
+                <th>API Calls</th>
+                <th>Status</th>
+                <th>Country</th>
+                <th>Last Active</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {customerRows.map(row => (
+                <tr key={row.name + row.email}>
+                  <td>
+                    <div className="a-td-main">{row.name}</div>
+                    <div className="a-td-sub">{row.email}</div>
+                  </td>
+                  <td>
+                    <span className="a-badge">{row.plan}</span>
+                  </td>
+                  <td><span className="mono">{row.usage}</span></td>
+                  <td><StatusBadge status={row.status} /></td>
+                  <td><span className="mono">{row.joined}</span></td>
+                  <td><span className="mono" style={{ color: 'var(--muted)' }}>{row.lastSeen}</span></td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button style={{ color: 'var(--muted)', padding: '4px' }}>
+                      <Icon.More />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        {/* Two column */}
+        <div className="a-two-col">
+          <div className="a-col">
+            {/* Sources */}
+            <Card title="Data Sources & Integrations">
+              <table className="a-table">
+                <thead>
+                  <tr>
+                    <th>Registry</th><th>Status</th><th>Last Updated</th><th>Records</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sourceRows.slice(0, 5).map(s => (
+                    <tr key={s.name}>
+                      <td><span className="a-td-main">{s.name}</span></td>
+                      <td><StatusBadge status={s.status} /></td>
+                      <td><span className="mono" style={{ color: 'var(--muted)' }}>{s.updated}</span></td>
+                      <td><span className="mono">{s.records}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+
+            {/* Runs */}
+            <Card title="Recent Ingestion Runs">
+              <table className="a-table">
+                <thead>
+                  <tr>
+                    <th>Source</th><th>Started</th><th>Duration</th><th>Records</th><th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {runRows.map(r => (
+                    <tr key={r.source + r.started}>
+                      <td><span style={{ color: '#fff', fontWeight: 500 }}>{r.source}</span></td>
+                      <td><span className="mono" style={{ color: 'var(--muted)' }}>{r.started}</span></td>
+                      <td><span className="mono">{r.duration}</span></td>
+                      <td><span className="mono">{r.records}</span></td>
+                      <td><StatusBadge status={r.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          </div>
+
+          <div className="a-col">
+            {/* System health */}
+            <Card title="System Health">
+              <div className="a-health-list">
+                {statusChecks.map(c => (
+                  <div className="a-health-row" key={c.service}>
+                    <div>
+                      <div className="a-health-service">{c.service}</div>
+                      <div className="a-health-meta">{c.meta}</div>
+                    </div>
+                    <StatusBadge status={c.status} />
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Live logs */}
+            <Card title="Live Logs" action={<Icon.Terminal />}>
+              <div style={{ padding: '4px 0' }}>
+                {logLines.length > 0 ? logLines.map((line, i) => (
+                  <div className="a-log-entry" key={i}>
+                    <span className="a-log-level info">INFO</span>
+                    <span className="a-log-msg">{line}</span>
+                  </div>
+                )) : (
+                  <div className="a-log-entry">
+                    <span className="a-log-level info">INFO</span>
+                    <span className="a-log-msg">No log entries in current payload.</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Recent billing */}
+            <Card title="Billing Summary">
+              <table className="a-table">
+                <tbody>
+                  {billingRows.slice(0, 4).map(b => (
+                    <tr key={b.account}>
+                      <td>
+                        <div className="a-td-main">{b.account}</div>
+                        <div className="a-td-sub">{b.plan}</div>
+                      </td>
+                      <td style={{ textAlign: 'right' }}><span className="mono">{b.amount}</span></td>
+                      <td style={{ textAlign: 'right' }}><StatusBadge status={b.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        <div className="sidebar-controls">
-          <button
-            className="button ghost"
-            onClick={() => setTheme((current) => (current === 'light' ? 'dark' : 'light'))}
-          >
-            {theme === 'light' ? 'Dark mode' : 'Light mode'}
-          </button>
-          <button className="button secondary" onClick={() => void loadData()} disabled={loadState.loading}>
-            {loadState.loading ? 'Refreshing…' : 'Reload operator data'}
-          </button>
+  function renderCustomers() {
+    return (
+      <div className="a-overview">
+        <Card title="All Customers" action={
+          <span className="a-badge">{customerRows.length} account{customerRows.length !== 1 ? 's' : ''}</span>
+        }>
+          <table className="a-table">
+            <thead>
+              <tr>
+                <th>Customer</th><th>Plan</th><th>Requests</th><th>Keys</th><th>Status</th><th>Last Active</th>
+              </tr>
+            </thead>
+            <tbody>
+              {customerRows.map(row => (
+                <tr key={row.name + row.email}>
+                  <td>
+                    <div className="a-td-main">{row.name}</div>
+                    <div className="a-td-sub">{row.email}</div>
+                  </td>
+                  <td><span className="a-badge">{row.plan}</span></td>
+                  <td><span className="mono">{row.usage}</span></td>
+                  <td><span className="mono">{row.keys}</span></td>
+                  <td><StatusBadge status={row.status} /></td>
+                  <td><span className="mono" style={{ color: 'var(--muted)' }}>{row.lastSeen}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        {usageOv && (
+          <div className="a-kpi-grid">
+            <div className="a-kpi">
+              <div className="a-kpi-label">Active customers</div>
+              <div className="a-kpi-value">{usageOv.activeCustomers}</div>
+              <div className="a-kpi-sub">{fmt(usageOv.activeApiKeys)} active keys</div>
+            </div>
+            <div className="a-kpi">
+              <div className="a-kpi-label">Total requests</div>
+              <div className="a-kpi-value">{fmtC(usageOv.currentPeriodTotalRequests)}</div>
+              <div className="a-kpi-sub">{fmt(usageOv.currentPeriodSearchRequests)} search · {fmt(usageOv.currentPeriodLookupRequests)} lookup</div>
+            </div>
+            <div className="a-kpi">
+              <div className="a-kpi-label">Usage events</div>
+              <div className="a-kpi-value">{fmtC(usageOv.usageEventCount)}</div>
+              <div className="a-kpi-sub neutral">{usageOv.latestUsageAt ? `Last: ${fmtWhen(usageOv.latestUsageAt)}` : 'No events yet'}</div>
+            </div>
+            <div className="a-kpi">
+              <div className="a-kpi-label">Companies in DB</div>
+              <div className="a-kpi-value">{dbOv ? fmtC(dbOv.companyCount) : '—'}</div>
+              <div className="a-kpi-sub neutral">{dbOv ? `${fmtC(dbOv.sourceRecordCount)} source records` : 'DB overview not available'}</div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderBilling() {
+    return (
+      <div className="a-overview">
+        <Card title="Billing Overview" action={
+          <span className="a-badge">{billingPlans?.meta?.checkoutConfigured ? 'Checkout ready' : 'Needs wiring'}</span>
+        }>
+          <table className="a-table">
+            <thead>
+              <tr><th>Account</th><th>Plan</th><th>Rate limit</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {billingRows.map(b => (
+                <tr key={b.account}>
+                  <td><span className="a-td-main">{b.account}</span></td>
+                  <td><span className="a-badge">{b.plan}</span></td>
+                  <td><span className="mono">{b.amount}</span></td>
+                  <td><StatusBadge status={b.status} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        <div className="a-main-grid">
+          <Card title="Plan Configuration">
+            <table className="a-table">
+              <thead><tr><th>Plan</th><th>Quota / month</th><th>Rate limit</th><th>Notes</th></tr></thead>
+              <tbody>
+                {plans.map(p => (
+                  <tr key={p.code}>
+                    <td><span className="a-td-main">{p.displayName}</span></td>
+                    <td><span className="mono">{p.monthlyQuota === 0 ? 'Custom' : fmt(p.monthlyQuota)}</span></td>
+                    <td><span className="mono">{p.rpmLimit === 0 ? 'Custom' : `${fmt(p.rpmLimit)} rpm`}</span></td>
+                    <td style={{ color: 'var(--muted)' }}>{p.notes ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+          <Card title="Billing Config Status">
+            <div className="a-health-list">
+              <div className="a-health-row">
+                <div><div className="a-health-service">Checkout</div><div className="a-health-meta">{billingPlans?.meta?.checkoutConfigured ? 'Configured' : 'Not wired'}</div></div>
+                <StatusBadge status={billingPlans?.meta?.checkoutConfigured ? 'Healthy' : 'Watch'} />
+              </div>
+              <div className="a-health-row">
+                <div><div className="a-health-service">Webhook</div><div className="a-health-meta">{billingPlans?.meta?.webhookConfigured ? 'Configured' : 'Missing'}</div></div>
+                <StatusBadge status={billingPlans?.meta?.webhookConfigured ? 'Healthy' : 'Watch'} />
+              </div>
+              <div className="a-health-row">
+                <div><div className="a-health-service">Billing mode</div><div className="a-health-meta">{billingPlans?.meta?.mode ?? '—'}</div></div>
+                <StatusBadge status={billingPlans?.meta?.mode === 'stripe' ? 'Active' : 'Watch'} />
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  function renderPipelines() {
+    return (
+      <div className="a-overview">
+        <Card title="Source Integrations" action={<span className="a-badge">{sourceRows.length} tracked</span>}>
+          <table className="a-table">
+            <thead><tr><th>Registry</th><th>Status</th><th>Last Updated</th><th>Records</th></tr></thead>
+            <tbody>
+              {sourceRows.map(s => (
+                <tr key={s.name}>
+                  <td><span className="a-td-main">{s.name}</span></td>
+                  <td><StatusBadge status={s.status} /></td>
+                  <td><span className="mono" style={{ color: 'var(--muted)' }}>{s.updated}</span></td>
+                  <td><span className="mono">{s.records}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        <Card title="Recent Ingestion Runs" action={<span className="a-badge">{runRows.length} runs</span>}>
+          <table className="a-table">
+            <thead><tr><th>Source</th><th>Started</th><th>Duration</th><th>Records written</th><th>Status</th></tr></thead>
+            <tbody>
+              {runRows.map(r => (
+                <tr key={r.source + r.started}>
+                  <td><span style={{ fontWeight: 500, color: '#fff' }}>{r.source}</span></td>
+                  <td><span className="mono" style={{ color: 'var(--muted)' }}>{r.started}</span></td>
+                  <td><span className="mono">{r.duration}</span></td>
+                  <td><span className="mono">{r.records}</span></td>
+                  <td><StatusBadge status={r.status} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        {dbOv && (
+          <div className="a-kpi-grid">
+            <div className="a-kpi"><div className="a-kpi-label">Total companies</div><div className="a-kpi-value">{fmtC(dbOv.companyCount)}</div><div className="a-kpi-sub">{fmtC(dbOv.ingestedCompanyCount)} ingested / {fmtC(dbOv.seededCompanyCount)} seeded</div></div>
+            <div className="a-kpi"><div className="a-kpi-label">Addresses</div><div className="a-kpi-value">{fmtC(dbOv.addressCount)}</div><div className="a-kpi-sub neutral">address table rows</div></div>
+            <div className="a-kpi"><div className="a-kpi-label">Activities</div><div className="a-kpi-value">{fmtC(dbOv.activityCount)}</div><div className="a-kpi-sub neutral">activity table rows</div></div>
+            <div className="a-kpi"><div className="a-kpi-label">Last source update</div><div className="a-kpi-value" style={{ fontSize: '14px' }}>{fmtWhen(dbOv.latestCompanySourceAt)}</div><div className="a-kpi-sub neutral">from companies table</div></div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderHealth() {
+    return (
+      <div className="a-overview">
+        <div className="a-main-grid">
+          <div className="a-col">
+            <Card title="Runtime Checks">
+              <div className="a-health-list">
+                {statusChecks.map(c => (
+                  <div className="a-health-row" key={c.service}>
+                    <div>
+                      <div className="a-health-service">{c.service}</div>
+                      <div className="a-health-meta">{c.meta}</div>
+                    </div>
+                    <StatusBadge status={c.status} />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+          <div className="a-col">
+            <Card title="Live Logs" action={<Icon.Terminal />}>
+              <div style={{ padding: '4px 0' }}>
+                {logLines.map((line, i) => (
+                  <div className="a-log-entry" key={i}>
+                    <span className="a-log-level info">INFO</span>
+                    <span className="a-log-msg">{line}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Render ───────────────────────────────────────────── */
+  return (
+    <div className="a-root">
+      {/* Sidebar */}
+      <aside className="a-sidebar">
+        <div className="a-logo">
+          <div className="a-logo-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+          </div>
+          <span className="a-logo-name">CompanyData Ops</span>
         </div>
 
-        <nav className="admin-nav" aria-label="Admin sections">
-          {Object.entries(groupedNav).map(([group, items]) => (
-            <div key={group} className="nav-group">
-              <div className="nav-group-label">{group}</div>
-              {items.map((item) => (
-                <button
-                  key={item.id}
-                  className={item.id === active ? 'nav-item active' : 'nav-item'}
-                  onClick={() => setActive(item.id)}
-                >
-                  <span className="nav-icon" aria-hidden="true">{iconForSection(item.id)}</span>
-                  <span className="nav-copy">
-                    <strong>{item.label}</strong>
-                    <small>{item.eyebrow}</small>
-                  </span>
-                </button>
-              ))}
+        <nav className="a-nav" aria-label="Admin navigation">
+          {Object.entries(navGroups).map(([group, items]) => (
+            <div className="a-nav-section" key={group}>
+              <span className="a-nav-label">{group}</span>
+              {items.map(n => {
+                const I = Icon[n.icon];
+                return (
+                  <button
+                    key={n.id}
+                    className={`a-nav-item ${active === n.id ? 'active' : ''}`}
+                    onClick={() => setActive(n.id)}
+                    aria-current={active === n.id ? 'page' : undefined}
+                  >
+                    <I />
+                    {n.label}
+                  </button>
+                );
+              })}
             </div>
           ))}
         </nav>
 
-        <div className="sidebar-runtime">
-          <div className="eyebrow">Runtime connection</div>
-          <strong>Legacy admin on :3013 (deprecated)</strong>
-          <p>Reads live admin data from {API_BASE_URL} when available and flags when a view is using local fallback rows.</p>
-          <div className="runtime-pills">
-            <span className={loadState.apiReachable ? 'status-badge good' : 'status-badge warn'}>
-              {loadState.apiReachable ? 'API connected' : 'Fallback data'}
-            </span>
-            <span className="status-badge neutral">Operator only</span>
+        <div className="a-sidebar-footer">
+          <div className="a-avatar">AD</div>
+          <div>
+            <div className="a-sidebar-user-name">Admin User</div>
+            <div className="a-sidebar-user-role">System Operator</div>
           </div>
         </div>
       </aside>
 
-      <main className="admin-main">
-        <header className="topbar panel">
-          <div>
-            <div className="breadcrumb">Operations / {activeItem.label}</div>
-            <h1>{activeItem.title}</h1>
-            <p>{activeItem.description}</p>
+      {/* Content */}
+      <div className="a-content">
+        <header className="a-header">
+          <div className="a-breadcrumb">
+            <span>Dashboards</span>
+            <Icon.Chevron />
+            <span className="active">{activeNav.label}</span>
           </div>
-          <div className="topbar-meta">
-            <div className="topbar-chip-row">
-              <span className="status-badge neutral">Operator console</span>
-              <span className={loadState.apiReachable ? 'status-badge good' : 'status-badge warn'}>
-                {loadState.apiReachable ? 'Live data' : 'Fallback data'}
-              </span>
+          <div className="a-header-right">
+            <div className="a-status-pill">
+              <span className="a-status-dot" style={{ background: load.apiReachable ? 'var(--ok)' : 'var(--warn)' }} />
+              {load.apiReachable ? 'API Connected' : 'Fallback Mode'}
             </div>
-            <div className="topbar-chip-row">
-              <span className="status-badge neutral">UTC {loadState.lastUpdated ? formatWhen(loadState.lastUpdated) : '—'}</span>
-              <button className="button primary" onClick={() => setActive('system-health')}>
-                Open system health
-              </button>
-            </div>
+            <span className="a-time">UTC {utcTime}</span>
+            <button className="a-btn" onClick={() => void loadData()} disabled={load.loading}>
+              {load.loading ? 'Loading…' : 'Refresh'}
+            </button>
           </div>
         </header>
 
-        {loadState.error ? <div className="callout warn">{loadState.error}</div> : null}
-
-        <section className="kpi-grid">
-          {adminStats.map((item) => (
-            <article className="kpi-card panel" key={item.label}>
-              <div className="eyebrow">Snapshot</div>
-              <strong>{item.value}</strong>
-              <span>{item.label}</span>
-              <p>{item.detail}</p>
-            </article>
-          ))}
-        </section>
-
-        {active === 'overview' ? (
-          <section className="overview-stack">
-            <Panel
-              title="Customer overview"
-              eyebrow="Internal customer control"
-              action={<span className="status-badge neutral">{customerRows.length} customer row(s)</span>}
-              className="focus-panel overview-table-panel"
-            >
-              <div className="table-shell">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Customer / company</th>
-                      <th>Plan</th>
-                      <th>Requests this period</th>
-                      <th>Status</th>
-                      <th>Last activity</th>
-                      <th>Next action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {customerRows.map((row) => (
-                      <tr key={row.name + row.note}>
-                        <td>
-                          <strong>{row.name}</strong>
-                          <div className="subtle-note">{row.owner} · {row.note}</div>
-                        </td>
-                        <td>
-                          <strong>{row.plan}</strong>
-                          <div className="subtle-note">{row.keys} · {row.usageDetail}</div>
-                        </td>
-                        <td>
-                          <div className="mono">{row.usage}</div>
-                        </td>
-                        <td><StatusBadge label={row.status} tone={row.tone} /></td>
-                        <td className="mono">{row.lastSeen}</td>
-                        <td>{row.action}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Panel>
-
-            <section className="overview-support-grid">
-              <Panel
-                title="Data sources & integrations"
-                eyebrow="Upstreams"
-                action={<span className="status-badge neutral">{sourceRows.length} tracked</span>}
-              >
-                <div className="table-shell">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Registry</th>
-                        <th>Status</th>
-                        <th>Detail</th>
-                        <th>Freshness</th>
-                        <th>Records</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sourceRows.slice(0, 5).map((row) => (
-                        <tr key={row.source}>
-                          <td><strong>{row.source}</strong></td>
-                          <td><StatusBadge label={row.status} tone={row.status === 'Healthy' ? 'good' : 'warn'} /></td>
-                          <td>{row.detail}</td>
-                          <td className="mono">{row.freshness}</td>
-                          <td className="mono">{row.records}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Panel>
-
-              <Panel
-                title="System health"
-                eyebrow="Runtime & alerts"
-                action={<span className="status-badge neutral">{alertItems.length} alert item(s)</span>}
-              >
-                <div className="stack-list compact">
-                  {statusChecks.slice(0, 4).map((row) => (
-                    <div className="list-row" key={row.service}>
-                      <div>
-                        <strong>{row.service}</strong>
-                        <p>{row.note}</p>
-                      </div>
-                      <StatusBadge label={row.state} tone={row.state === 'Healthy' ? 'good' : row.state === 'Offline' ? 'neutral' : 'warn'} />
-                    </div>
-                  ))}
-                  {customerAttentionRows.length > 0 ? customerAttentionRows.slice(0, 2).map((row) => (
-                    <div className="list-row" key={row.name + row.action}>
-                      <div>
-                        <strong>{row.name}</strong>
-                        <p>{row.action}</p>
-                      </div>
-                      <StatusBadge label={row.status} tone={row.tone} />
-                    </div>
-                  )) : null}
-                </div>
-              </Panel>
-            </section>
-          </section>
-        ) : null}
-
-        {active === 'customers' ? (
-          <section className="main-grid">
-            <div className="main-column">
-              <Panel title="Customers needing attention" eyebrow="Accounts" action={<span className="status-badge neutral">{customerRows.length} accounts shown</span>} className="focus-panel">
-                <div className="table-shell">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Customer</th>
-                        <th>Plan / scope</th>
-                        <th>Usage</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {customerRows.map((row) => (
-                        <tr key={row.name + row.note}>
-                          <td><strong>{row.name}</strong><div className="subtle-note">{row.note}</div></td>
-                          <td>{row.plan}</td>
-                          <td className="mono">{row.usage}</td>
-                          <td><StatusBadge label={row.status} tone={row.status === 'Healthy' ? 'good' : 'warn'} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Panel>
-            </div>
-            <div className="side-column">
-              <Panel title="Request volume" eyebrow="Traffic" action={<span className="status-badge neutral">{usageOverview ? 'Live counters' : 'Derived signals'}</span>}>
-                <div className="metric-stack">
-                  <div className="metric-row"><span>Total requests</span><strong>{usageOverview ? formatNumber(usageOverview.currentPeriodTotalRequests) : (seenRecords > 0 ? formatNumber(seenRecords) : '—')}</strong></div>
-                  <div className="metric-row"><span>Search requests</span><strong>{usageOverview ? formatNumber(usageOverview.currentPeriodSearchRequests) : '—'}</strong></div>
-                  <div className="metric-row"><span>Lookup requests</span><strong>{usageOverview ? formatNumber(usageOverview.currentPeriodLookupRequests) : '—'}</strong></div>
-                  <div className="metric-row"><span>Failed ingest records</span><strong>{failedRunRecords > 0 ? formatNumber(failedRunRecords) : '0'}</strong></div>
-                </div>
-                <div className="readiness-block">
-                  <div className="readiness-head"><span>Integration readiness</span><strong>{readinessPercent}%</strong></div>
-                  <div className="meter"><div className="meter-fill" style={{ width: `${readinessPercent}%` }} /></div>
-                  <p>{usageOverview ? 'Request numbers are live from local usage tables. Readiness still reflects source coverage until deeper platform telemetry exists.' : 'Usage is falling back to ingestion and source proxies because local usage counters are not available yet.'}</p>
-                </div>
-              </Panel>
-            </div>
-          </section>
-        ) : null}
-
-        {active === 'billing' ? (
-          <section className="main-grid">
-            <div className="main-column">
-              <Panel title="Billing follow-up" eyebrow="Revenue ops" action={<span className="status-badge neutral">{plans.length > 0 ? `${plans.length} plans loaded` : 'Local plan rows'}</span>} className="focus-panel">
-                <div className="stack-list compact">
-                  {billingRows.map((row) => (
-                    <div className="list-row" key={row.account + row.issue}>
-                      <div><strong>{row.account}</strong><p>{row.issue}</p></div>
-                      <div className="row-metrics"><strong>{row.amount}</strong><span>{row.action}</span></div>
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-            </div>
-            <div className="side-column">
-              <Panel title="Billing alerts" eyebrow="Configuration" action={<span className="status-badge neutral">{billingPlans?.meta?.checkoutConfigured ? 'Checkout ready' : 'Needs wiring'}</span>}>
-                <div className="stack-list compact">
-                  <div className="list-row"><div><strong>Checkout</strong><p>{billingPlans?.meta?.checkoutConfigured ? 'Checkout configuration is present for local billing flows.' : 'Checkout wiring is not configured yet.'}</p></div><StatusBadge label={billingPlans?.meta?.checkoutConfigured ? 'Healthy' : 'Watch'} tone={billingPlans?.meta?.checkoutConfigured ? 'good' : 'warn'} /></div>
-                  <div className="list-row"><div><strong>Webhook</strong><p>{billingPlans?.meta?.webhookConfigured ? 'Webhook configuration is present.' : 'Webhook configuration is still missing or incomplete.'}</p></div><StatusBadge label={billingPlans?.meta?.webhookConfigured ? 'Healthy' : 'Watch'} tone={billingPlans?.meta?.webhookConfigured ? 'good' : 'warn'} /></div>
-                </div>
-              </Panel>
-            </div>
-          </section>
-        ) : null}
-
-        {active === 'data-pipelines' ? (
-          <section className="main-grid">
-            <div className="main-column">
-              <Panel title="Source integrations" eyebrow="Upstreams" action={<span className="status-badge neutral">{sourceRows.length} sources tracked</span>} className="focus-panel">
-                <div className="table-shell"><table><thead><tr><th>Registry</th><th>Status</th><th>Detail</th><th>Freshness</th><th>Records</th></tr></thead><tbody>{sourceRows.map((row) => (<tr key={row.source}><td><strong>{row.source}</strong></td><td><StatusBadge label={row.status} tone={row.status === 'Healthy' ? 'good' : 'warn'} /></td><td>{row.detail}</td><td className="mono">{row.freshness}</td><td className="mono">{row.records}</td></tr>))}</tbody></table></div>
-              </Panel>
-              <Panel title="Runs to review" eyebrow="Pipelines" action={<span className="status-badge neutral">{runRows.length} recent runs</span>}>
-                <div className="table-shell"><table><thead><tr><th>Run</th><th>Source</th><th>Records</th><th>Duration</th><th>Checkpoint</th><th>Status</th></tr></thead><tbody>{runRows.map((row) => (<tr key={row.run}><td className="mono">{row.run}</td><td>{row.source}</td><td className="mono">{row.records}</td><td className="mono">{row.duration}</td><td className="mono">{row.checkpoint}</td><td><StatusBadge label={row.result} tone={toneFromRunStatus(row.result.toLowerCase())} /></td></tr>))}</tbody></table></div>
-              </Panel>
-            </div>
-            <div className="side-column">
-              <Panel title="Data freshness" eyebrow="Storage" action={<span className="status-badge neutral">Postgres-backed summary</span>}>
-                <div className="stack-list compact">{databaseRows.map((row) => (<div className="list-row" key={row.metric}><div><strong>{row.metric}</strong><p>{row.note}</p></div><div className="row-metrics"><strong>{row.value}</strong></div></div>))}</div>
-              </Panel>
-            </div>
-          </section>
-        ) : null}
-
-        {active === 'system-health' ? (
-          <section className="main-grid">
-            <div className="main-column">
-              <Panel title="Runtime checks" eyebrow="Runtime" action={<span className="status-badge neutral">Local environment</span>} className="focus-panel">
-                <div className="stack-list">{statusChecks.map((row) => (<div className="list-row" key={row.service}><div><strong>{row.service}</strong><p>{row.note}</p></div><StatusBadge label={row.state} tone={row.state === 'Healthy' ? 'good' : row.state === 'Offline' ? 'neutral' : 'warn'} /></div>))}</div>
-              </Panel>
-              <Panel title="Active alerts" eyebrow="Warnings" action={<span className="status-badge neutral">{alertItems.length} active</span>}>
-                <div className="stack-list compact">{alertItems.length > 0 ? alertItems.map((alert) => (<div className="list-row" key={alert.title + alert.detail}><div><strong>{alert.title}</strong><p>{alert.detail}</p></div><StatusBadge label={alert.tone === 'warn' ? 'Needs review' : 'Advisory'} tone={alert.tone} /></div>)) : <div className="log-row">No active alerts in the current payload.</div>}</div>
-              </Panel>
-            </div>
-            <div className="side-column">
-              <Panel title="Notes and fallbacks" eyebrow="Recent activity" action={<span className="status-badge neutral">{loadState.lastUpdated ? 'Fresh' : 'Pending'}</span>}>
-                <div className="log-list">{logEvents.map((entry) => (<div className="log-row" key={entry}>{entry}</div>))}</div>
-              </Panel>
-              <Panel title="What changed recently" eyebrow="Ops snapshot" action={<span className="status-badge neutral">Internal control surface</span>}>
-                <div className="stack-list compact">{activityFeed.map((entry) => (<div className="list-row simple" key={entry}><p>{entry}</p></div>))}</div>
-              </Panel>
-            </div>
-          </section>
-        ) : null}
-      </main>
+        <main className="a-scroll">
+          {load.error && <div className="a-callout">{load.error}</div>}
+          {active === 'overview'        && renderOverview()}
+          {active === 'customers'       && renderCustomers()}
+          {active === 'billing'         && renderBilling()}
+          {active === 'data-pipelines'  && renderPipelines()}
+          {active === 'system-health'   && renderHealth()}
+        </main>
+      </div>
     </div>
   );
 }

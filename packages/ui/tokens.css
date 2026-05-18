@@ -1,0 +1,75 @@
+/*
+ * Company Data Design Tokens
+ * Shared CSS custom properties for all apps.
+ * Each app overrides these in its own styles.css for light/dark contexts.
+ */
+
+:root {
+  /* Brand */
+  --token-brand-50:  #eff6ff;
+  --token-brand-100: #dbeafe;
+  --token-brand-200: #bfdbfe;
+  --token-brand-400: #60a5fa;
+  --token-brand-500: #3b82f6;
+  --token-brand-600: #2563eb;
+  --token-brand-700: #1d4ed8;
+  --token-brand-800: #1e40af;
+  --token-brand-900: #1e3a8a;
+
+  /* Slate (neutral) */
+  --token-slate-50:  #f8fafc;
+  --token-slate-100: #f1f5f9;
+  --token-slate-200: #e2e8f0;
+  --token-slate-300: #cbd5e1;
+  --token-slate-400: #94a3b8;
+  --token-slate-500: #64748b;
+  --token-slate-600: #475569;
+  --token-slate-700: #334155;
+  --token-slate-800: #1e293b;
+  --token-slate-900: #0f172a;
+  --token-slate-950: #020617;
+
+  /* Status */
+  --token-success-50:  #ecfdf5;
+  --token-success-400: #34d399;
+  --token-success-500: #10b981;
+  --token-success-600: #059669;
+  --token-success-700: #047857;
+
+  --token-warning-50:  #fffbeb;
+  --token-warning-400: #fbbf24;
+  --token-warning-500: #f59e0b;
+  --token-warning-600: #d97706;
+  --token-warning-700: #b45309;
+
+  --token-danger-50:  #fef2f2;
+  --token-danger-400: #f87171;
+  --token-danger-500: #ef4444;
+  --token-danger-600: #dc2626;
+  --token-danger-700: #b91c1c;
+
+  /* Typography */
+  --token-font-sans: 'DM Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --token-font-mono: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace;
+
+  /* Motion */
+  --token-ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --token-duration-fast: 150ms;
+  --token-duration-base: 200ms;
+  --token-duration-slow: 300ms;
+  --token-transition: all var(--token-duration-slow) var(--token-ease-out);
+
+  /* Radius */
+  --token-radius-sm:  6px;
+  --token-radius-md:  8px;
+  --token-radius-lg:  12px;
+  --token-radius-xl:  16px;
+  --token-radius-2xl: 20px;
+  --token-radius-full: 9999px;
+
+  /* Shadows (light context) */
+  --token-shadow-sm:  0 1px 2px rgba(15, 23, 42, 0.04);
+  --token-shadow-md:  0 2px 10px -4px rgba(0, 0, 0, 0.05);
+  --token-shadow-lg:  0 8px 24px -4px rgba(15, 23, 42, 0.08);
+  --token-shadow-xl:  0 20px 60px rgba(15, 23, 42, 0.08);
+}
