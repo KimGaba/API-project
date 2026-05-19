@@ -51,6 +51,8 @@ services:
     restart: unless-stopped
     working_dir: /workspace/apps/admin
     command: sh -lc "npm install && npm run build && npm run preview -- --host 0.0.0.0 --port ${ADMIN_PORT:-3013}"
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://192.168.1.10:3011}
     ports:
       - "${ADMIN_PORT:-3013}:${ADMIN_PORT:-3013}"
     volumes:
@@ -88,6 +90,14 @@ services:
       redis:
         condition: service_healthy
 
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - "3014:8080"
+    depends_on:
+      - postgres
+
   worker-no:
     image: python:3.12-slim
     working_dir: /workspace/workers
@@ -103,6 +113,18 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+
+  worker-fi:
+    image: python:3.12-slim
+    working_dir: /workspace/workers
+    command: sh -lc "pip install -r requirements.txt -e . && PYTHONPATH=src python -m company_data_workers.ingest_finland.cli ingest-bulk"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://company_data:company_data_dev@postgres:5432/company_data_dev}
+    volumes:
+      - ./:/workspace
+    depends_on:
+      postgres:
         condition: service_healthy
 
   worker-uk:
