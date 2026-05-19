@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" width="320" height="64" role="img" aria-label="CompanyData wordmark">
+  <defs>
+    <linearGradient id="wm-g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0052cc"></stop>
+      <stop offset="100%" stop-color="#003e99"></stop>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="8" width="48" height="48" rx="12" fill="url(#wm-g)"></rect>
+  <text x="24" y="40" text-anchor="middle" font-family="Plus Jakarta Sans, Inter, sans-serif" font-weight="800" font-size="20" fill="#fff">CD</text>
+  <text x="62" y="40" font-family="Plus Jakarta Sans, Inter, sans-serif" font-weight="700" font-size="24" letter-spacing="-0.5" fill="#1f2933">CompanyData</text>
+  <text x="62" y="56" font-family="Inter, sans-serif" font-weight="500" font-size="11" letter-spacing="0.4" fill="#7b8794">EUROPEAN COMPANY DATA API</text>
+</svg>

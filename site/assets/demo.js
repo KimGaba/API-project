@@ -1,4 +1,4 @@
-const API_BASE = 'http://192.168.86.23:3011';
+const API_BASE = 'http://192.168.1.10:3011';
 
 document.addEventListener('DOMContentLoaded', () => {
   const routeSelect = document.getElementById('route-select');

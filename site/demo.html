@@ -1,3 +1,178 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Company Data API · Demo</title><link rel="stylesheet" href="./assets/site.css" /></head>
-<body data-page="demo"><div class="sidebar-overlay" id="sidebar-overlay"></div><div class="page"><header class="topbar"><div class="brand"><div class="brand-mark">CD</div><div class="brand-copy"><strong>Company Data API</strong><span>Working browser playground</span></div></div><nav class="topbar-nav"><a href="./" data-page-link="home">Home</a><a href="./product.html" data-page-link="product">Product</a><a href="./docs.html" data-page-link="docs">Docs</a><a href="./pricing.html" data-page-link="pricing">Pricing</a><a href="./coverage.html" data-page-link="coverage">Coverage</a><a href="./demo.html" data-page-link="demo">Demo</a></nav><div class="topbar-actions"><a class="ghost-button" href="./playground.html">Legacy one-pager</a><a class="button" href="./docs.html">Read docs</a></div><button class="menu-button" id="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button></header><div class="layout"><aside class="sidebar" id="site-nav"><div class="sidebar-head"><div><div class="pill">Demo</div><h1>Safe public playground</h1><p>The live evaluator stays here, and the former all-in-one page is preserved separately as a legacy view.</p></div><button class="close-nav" id="close-nav" type="button" aria-label="Close navigation"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg></button></div><div class="group"><h2>Pages</h2><div class="nav-stack"><a class="nav-link" href="./" data-page-link="home">Home</a><a class="nav-link" href="./product.html" data-page-link="product">Product</a><a class="nav-link" href="./docs.html" data-page-link="docs">Docs</a><a class="nav-link" href="./pricing.html" data-page-link="pricing">Pricing</a><a class="nav-link" href="./coverage.html" data-page-link="coverage">Coverage</a><a class="nav-link" href="./demo.html" data-page-link="demo">Demo</a></div></div><div class="group"><h2>Preserved page</h2><div class="nav-stack"><a class="nav-link" href="./playground.html">Legacy one-page public surface</a></div></div></aside><main><section class="hero"><span class="eyebrow">Demo</span><div class="hero-grid"><div><h1 class="compact">Try the live local API in-browser.</h1><p>Pick a route, keep the default demo key, and inspect both raw JSON and formatted search output. The demo remains truthful: same local API, same seeded data, same real responses.</p><div class="chip-row"><span class="badge">Base URL: <code>http://192.168.86.23:3011</code></span><span class="badge">Auth: <code>x-api-key</code></span><span class="badge">Demo key: <code>demo_live_123</code></span></div></div><div class="hero-note"><strong>Need the original combined page?</strong><p>The previous single-page version was preserved as <a href="./playground.html">playground.html</a> so nothing useful got thrown away during the split.</p></div></div></section><section class="play-surface"><span class="eyebrow">Playground</span><div class="play-header"><div><h3>Run a real request</h3><p class="muted">This is the extracted working playground from the old public surface, now on its own dedicated page.</p></div><div class="status-pill">Runs in-browser against <code>192.168.86.23:3011</code></div></div><div class="play-grid"><div class="panel"><div class="fields"><div class="field"><label for="route-select">Endpoint</label><select id="route-select"><option value="health">GET /health</option><option value="countries">GET /v1/meta/countries</option><option value="search" selected>GET /v1/companies/search</option></select></div><div class="field"><label for="api-key">API key</label><input id="api-key" value="demo_live_123" /><span class="field-help">Used for all <code>/v1</code> requests.</span></div><div class="field"><label for="query-input">Search query (<code>q</code>)</label><input id="query-input" value="Example" placeholder="Example" /></div><div class="field"><label for="country-input">Country filter</label><select id="country-input"><option value="">Loading country catalogue…</option></select><span class="field-help" id="country-help">The filter is populated from <code>/v1/meta/countries</code>.</span></div><div class="field"><label for="limit-input">Limit</label><input id="limit-input" type="number" min="1" max="50" value="10" /></div><div class="field"><label for="request-url">Resolved request URL</label><input id="request-url" readonly /></div></div><div class="button-row" style="margin-top:16px;"><button class="run-btn" id="run-request">Run request</button><button class="ghost-button" id="load-search">Load search preset</button><button class="ghost-button" id="load-countries">Load countries preset</button><button class="ghost-button" id="load-health">Load health preset</button></div><div class="code-block" style="margin-top:16px;"><div class="code-head"><span>Generated fetch example</span><button class="copy-btn" data-copy="#playground-request">Copy</button></div><pre id="playground-request"></pre></div></div><div class="panel"><div class="output-meta"><span id="response-status">Status: waiting</span><span id="response-time">Time: —</span><span id="response-type">Content-Type: —</span></div><div class="code-block"><div class="code-head"><span>Response body</span><button class="copy-btn" data-copy="#playground-response">Copy</button></div><pre id="playground-response">Choose a preset or edit the fields, then run a request.</pre></div><div class="search-insights" id="search-insights"><div class="search-summary" id="search-summary"><div><strong>Search results will render here</strong><div class="muted">Run the company search route to get a cleaner, product-style readout alongside the raw JSON.</div></div><div class="summary-chips"><span class="summary-chip">Human-readable summary</span><span class="summary-chip">Country labels</span><span class="summary-chip">Clear empty states</span></div></div><div class="result-list" id="search-results"></div></div></div></div></section></main></div></div><script src="./assets/site.js"></script><script src="./assets/demo.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Company Data API · Demo</title>
+  <link rel="stylesheet" href="./assets/site.css" />
+</head>
+<body data-page="demo">
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">CD</div>
+        <div class="brand-copy">
+          <strong>Company Data API</strong>
+          <span>European company data infrastructure</span>
+        </div>
+      </div>
+      <nav class="topbar-nav" aria-label="Desktop navigation">
+        <a href="./" data-page-link="home">Home</a>
+        <a href="./product.html" data-page-link="product">Product</a>
+        <a href="./docs.html" data-page-link="docs">Docs</a>
+        <a href="./pricing.html" data-page-link="pricing">Pricing</a>
+        <a href="./coverage.html" data-page-link="coverage">Coverage</a>
+        <a href="./demo.html" data-page-link="demo">Demo</a>
+      </nav>
+      <div class="topbar-actions">
+        <a class="ghost-button" href="./docs.html">Read docs</a>
+        <a class="button" href="./signup.html">Get started free</a>
+      </div>
+      <button class="menu-button" id="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+      </button>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar" id="site-nav" aria-label="Site navigation">
+        <div class="sidebar-head">
+          <div>
+            <div class="pill">Demo</div>
+            <h1>Live API playground</h1>
+            <p>Run real requests against the API in-browser. No signup required.</p>
+          </div>
+          <button class="close-nav" id="close-nav" type="button" aria-label="Close navigation">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+        </div>
+        <div class="group">
+          <h2>Navigation</h2>
+          <div class="nav-stack">
+            <a class="nav-link" href="./" data-page-link="home">Home</a>
+            <a class="nav-link" href="./product.html" data-page-link="product">Product</a>
+            <a class="nav-link" href="./docs.html" data-page-link="docs">Docs</a>
+            <a class="nav-link" href="./pricing.html" data-page-link="pricing">Pricing</a>
+            <a class="nav-link" href="./coverage.html" data-page-link="coverage">Coverage</a>
+            <a class="nav-link" href="./demo.html" data-page-link="demo">Demo</a>
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <section class="hero">
+          <span class="eyebrow">Demo</span>
+          <div class="hero-grid">
+            <div>
+              <h1 class="compact">Try the live API in your browser.</h1>
+              <p>Pick an endpoint, run a request, and inspect the real JSON response. Uses the demo API key — no signup needed to evaluate.</p>
+              <div class="chip-row">
+                <span class="badge">Base URL: <code>http://192.168.1.10:3011</code></span>
+                <span class="badge">Auth: <code>x-api-key</code></span>
+                <span class="badge">Demo key: <code>demo_live_123</code></span>
+              </div>
+            </div>
+            <div class="hero-note">
+              <strong>What you can test</strong>
+              <p>Search companies in Norway and the UK, list supported countries, or check the health endpoint. All responses are real — not mocked.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="play-surface">
+          <span class="eyebrow">Playground</span>
+          <div class="play-header">
+            <div>
+              <h3>Run a real request</h3>
+              <p class="muted">Choose an endpoint, edit the parameters, then run. The generated fetch code updates as you type.</p>
+            </div>
+            <div class="status-pill">Live — <code>192.168.1.10:3011</code></div>
+          </div>
+          <div class="play-grid">
+            <div class="panel">
+              <div class="fields">
+                <div class="field">
+                  <label for="route-select">Endpoint</label>
+                  <select id="route-select">
+                    <option value="health">GET /health</option>
+                    <option value="countries">GET /v1/meta/countries</option>
+                    <option value="search" selected>GET /v1/companies/search</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="api-key">API key</label>
+                  <input id="api-key" value="demo_live_123" />
+                  <span class="field-help">Used for all <code>/v1</code> routes.</span>
+                </div>
+                <div class="field">
+                  <label for="query-input">Search query (<code>q</code>)</label>
+                  <input id="query-input" value="Example" placeholder="Company name or reg. number" />
+                </div>
+                <div class="field">
+                  <label for="country-input">Country</label>
+                  <select id="country-input">
+                    <option value="">Loading…</option>
+                  </select>
+                  <span class="field-help" id="country-help">Populated from <code>/v1/meta/countries</code>.</span>
+                </div>
+                <div class="field">
+                  <label for="limit-input">Limit</label>
+                  <input id="limit-input" type="number" min="1" max="50" value="10" />
+                </div>
+                <div class="field">
+                  <label for="request-url">Resolved URL</label>
+                  <input id="request-url" readonly />
+                </div>
+              </div>
+              <div class="button-row" style="margin-top: 16px;">
+                <button class="run-btn" id="run-request">Run request</button>
+                <button class="ghost-button" id="load-search">Search preset</button>
+                <button class="ghost-button" id="load-countries">Countries preset</button>
+                <button class="ghost-button" id="load-health">Health preset</button>
+              </div>
+              <div class="code-block" style="margin-top: 16px;">
+                <div class="code-head">
+                  <span>Generated fetch</span>
+                  <button class="copy-btn" data-copy="#playground-request">Copy</button>
+                </div>
+                <pre id="playground-request"></pre>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="output-meta">
+                <span id="response-status">Status: waiting</span>
+                <span id="response-time">Time: —</span>
+                <span id="response-type">Content-Type: —</span>
+              </div>
+              <div class="code-block">
+                <div class="code-head">
+                  <span>Response</span>
+                  <button class="copy-btn" data-copy="#playground-response">Copy</button>
+                </div>
+                <pre id="playground-response">Choose a preset or edit the fields above, then hit Run request.</pre>
+              </div>
+              <div class="search-insights" id="search-insights">
+                <div class="search-summary" id="search-summary">
+                  <div>
+                    <strong>Search results will appear here</strong>
+                    <div class="muted">Run the company search route to see a formatted result view alongside the raw JSON.</div>
+                  </div>
+                  <div class="summary-chips">
+                    <span class="summary-chip">Formatted output</span>
+                    <span class="summary-chip">Country labels</span>
+                    <span class="summary-chip">Clear empty states</span>
+                  </div>
+                </div>
+                <div class="result-list" id="search-results"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="./assets/site.js"></script>
+  <script src="./assets/demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 480" width="600" height="480" role="img" aria-label="Europe outline backdrop">
+  <defs>
+    <radialGradient id="eu-g" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0052cc" stop-opacity="0.18"></stop>
+      <stop offset="100%" stop-color="#0052cc" stop-opacity="0"></stop>
+    </radialGradient>
+    <pattern id="eu-dots" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#0052cc" fill-opacity="0.18"></circle>
+    </pattern>
+  </defs>
+  <rect width="600" height="480" fill="url(#eu-g)"></rect>
+  
+  <g fill="url(#eu-dots)" stroke="#0052cc" stroke-opacity="0.35" stroke-width="1">
+    <path d="M120 80 Q200 60 260 70 Q330 50 380 80 Q460 90 500 140 Q520 200 480 240 Q500 290 460 330 Q420 380 360 380 Q300 410 240 380 Q180 390 140 350 Q90 320 100 270 Q70 210 100 160 Q90 110 120 80 Z"></path>
+  </g>
+  
+  <g fill="#0052cc">
+    <circle cx="240" cy="140" r="3"></circle> 
+    <circle cx="290" cy="130" r="3"></circle> 
+    <circle cx="310" cy="120" r="3"></circle> 
+    <circle cx="310" cy="180" r="3"></circle> 
+    <circle cx="270" cy="200" r="3"></circle> 
+    <circle cx="240" cy="220" r="3"></circle> 
+    <circle cx="350" cy="220" r="3"></circle> 
+    <circle cx="280" cy="280" r="3"></circle> 
+    <circle cx="340" cy="280" r="3"></circle> 
+  </g>
+  <g stroke="#0052cc" stroke-opacity="0.35" stroke-width="1" fill="none">
+    <line x1="240" y1="140" x2="290" y2="130"></line>
+    <line x1="290" y1="130" x2="310" y2="120"></line>
+    <line x1="290" y1="130" x2="310" y2="180"></line>
+    <line x1="310" y1="180" x2="270" y2="200"></line>
+    <line x1="270" y1="200" x2="240" y2="220"></line>
+    <line x1="310" y1="180" x2="350" y2="220"></line>
+    <line x1="240" y1="220" x2="280" y2="280"></line>
+    <line x1="280" y1="280" x2="340" y2="280"></line>
+  </g>
+</svg>
