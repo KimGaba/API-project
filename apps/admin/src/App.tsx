@@ -640,49 +640,135 @@ export default function App() {
   }
 
   function renderPipelines() {
+    const liveSources = sources.length > 0;
     return (
       <div className="a-overview">
-        <Card title="Source Integrations" action={<span className="a-badge">{sourceRows.length} tracked</span>}>
-          <table className="a-table">
-            <thead><tr><th>Registry</th><th>Status</th><th>Last Updated</th><th>Records</th></tr></thead>
-            <tbody>
-              {sourceRows.map(s => (
-                <tr key={s.name}>
-                  <td><span className="a-td-main">{s.name}</span></td>
-                  <td><StatusBadge status={s.status} /></td>
-                  <td><span className="mono" style={{ color: 'var(--muted)' }}>{s.updated}</span></td>
-                  <td><span className="mono">{s.records}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
 
-        <Card title="Recent Ingestion Runs" action={<span className="a-badge">{runRows.length} runs</span>}>
-          <table className="a-table">
-            <thead><tr><th>Source</th><th>Started</th><th>Duration</th><th>Records written</th><th>Status</th></tr></thead>
-            <tbody>
-              {runRows.map(r => (
-                <tr key={r.source + r.started}>
-                  <td><span style={{ fontWeight: 500, color: '#fff' }}>{r.source}</span></td>
-                  <td><span className="mono" style={{ color: 'var(--muted)' }}>{r.started}</span></td>
-                  <td><span className="mono">{r.duration}</span></td>
-                  <td><span className="mono">{r.records}</span></td>
-                  <td><StatusBadge status={r.status} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-
+        {/* DB stats strip */}
         {dbOv && (
           <div className="a-kpi-grid">
-            <div className="a-kpi"><div className="a-kpi-label">Total companies</div><div className="a-kpi-value">{fmtC(dbOv.companyCount)}</div><div className="a-kpi-sub">{fmtC(dbOv.ingestedCompanyCount)} ingested / {fmtC(dbOv.seededCompanyCount)} seeded</div></div>
-            <div className="a-kpi"><div className="a-kpi-label">Addresses</div><div className="a-kpi-value">{fmtC(dbOv.addressCount)}</div><div className="a-kpi-sub neutral">address table rows</div></div>
-            <div className="a-kpi"><div className="a-kpi-label">Activities</div><div className="a-kpi-value">{fmtC(dbOv.activityCount)}</div><div className="a-kpi-sub neutral">activity table rows</div></div>
-            <div className="a-kpi"><div className="a-kpi-label">Last source update</div><div className="a-kpi-value" style={{ fontSize: '14px' }}>{fmtWhen(dbOv.latestCompanySourceAt)}</div><div className="a-kpi-sub neutral">from companies table</div></div>
+            <div className="a-kpi"><div className="a-kpi-label">Companies in DB</div><div className="a-kpi-value">{fmtC(dbOv.companyCount)}</div><div className="a-kpi-sub">{fmtC(dbOv.ingestedCompanyCount)} ingested · {fmtC(dbOv.seededCompanyCount)} seeded</div></div>
+            <div className="a-kpi"><div className="a-kpi-label">Source records</div><div className="a-kpi-value">{fmtC(dbOv.sourceRecordCount)}</div><div className="a-kpi-sub neutral">raw payloads stored</div></div>
+            <div className="a-kpi"><div className="a-kpi-label">Addresses</div><div className="a-kpi-value">{fmtC(dbOv.addressCount)}</div><div className="a-kpi-sub neutral">registered addresses</div></div>
+            <div className="a-kpi"><div className="a-kpi-label">Last ingest</div><div className="a-kpi-value" style={{ fontSize: '13px' }}>{fmtWhen(dbOv.latestCompanySourceAt)}</div><div className="a-kpi-sub neutral">latest source record</div></div>
           </div>
         )}
+
+        {/* Source detail cards */}
+        {liveSources ? (
+          <div>
+            <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontWeight: 600, color: 'var(--fg)' }}>Source Integrations</span>
+              <span className="a-badge">{sources.length} tracked</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '12px' }}>
+              {sources.map(s => {
+                const runStatus = s.latestRun?.status;
+                const cardStatus = runStatus === 'failed' ? 'Degraded' : s.status === 'active' ? 'Active' : 'Watch';
+                return (
+                  <div className="a-card" key={s.sourceCode} style={{ padding: 0, overflow: 'hidden' }}>
+                    <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--fg)', fontSize: '14px' }}>{s.countryCode} · {s.sourceName}</div>
+                          <div style={{ color: 'var(--muted)', fontSize: '12px', marginTop: '2px' }}>
+                            {s.accessMethod.toUpperCase()} · {s.updateCadence ?? 'unknown cadence'} · {s.licenseTag}
+                          </div>
+                        </div>
+                        <StatusBadge status={cardStatus} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '14px 18px', gap: '12px' }}>
+                      <div>
+                        <div style={{ color: 'var(--muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Companies</div>
+                        <div style={{ fontWeight: 600, fontSize: '20px', color: 'var(--fg)', marginTop: '4px' }}>{s.companiesCount > 0 ? fmtC(s.companiesCount) : '—'}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: 'var(--muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Source records</div>
+                        <div style={{ fontWeight: 600, fontSize: '20px', color: 'var(--fg)', marginTop: '4px' }}>{s.sourceRecordsCount > 0 ? fmtC(s.sourceRecordsCount) : '—'}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: 'var(--muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ingest runs</div>
+                        <div style={{ fontWeight: 600, fontSize: '20px', color: 'var(--fg)', marginTop: '4px' }}>{s.ingestionRunsCount}</div>
+                      </div>
+                    </div>
+                    {s.latestRun ? (
+                      <div style={{ padding: '10px 18px 14px', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
+                        <div>
+                          <div style={{ color: 'var(--muted)', fontSize: '11px' }}>Last run</div>
+                          <div style={{ fontSize: '12px', color: 'var(--fg)', marginTop: '2px' }}>{fmtWhen(s.latestRun.completedAt ?? s.latestRun.startedAt)}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: 'var(--muted)', fontSize: '11px' }}>Written</div>
+                          <div style={{ fontSize: '12px', color: 'var(--fg)', marginTop: '2px' }}>{fmt(s.latestRun.recordsWritten)}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: 'var(--muted)', fontSize: '11px' }}>Failed</div>
+                          <div style={{ fontSize: '12px', color: s.latestRun.recordsFailed > 0 ? 'var(--warn)' : 'var(--muted)', marginTop: '2px' }}>{s.latestRun.recordsFailed}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: 'var(--muted)', fontSize: '11px' }}>Status</div>
+                          <div style={{ marginTop: '2px' }}><StatusBadge status={humanize(s.latestRun.status)} /></div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ padding: '10px 18px 14px', borderTop: '1px solid var(--border)', color: 'var(--muted)', fontSize: '12px' }}>
+                        No ingestion run recorded yet.
+                      </div>
+                    )}
+                    <div style={{ padding: '8px 18px', borderTop: '1px solid var(--border)', display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--muted)' }}>
+                      <span>Commercial reuse: <strong style={{ color: s.commercialReuseAllowed ? 'var(--ok)' : 'var(--warn)' }}>{s.commercialReuseAllowed ? 'Allowed' : 'Restricted'}</strong></span>
+                      <span>·</span>
+                      <span>Code: <code style={{ fontSize: '11px' }}>{s.sourceCode}</code></span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <Card title="Source Integrations" action={<span className="a-badge">no live data</span>}>
+            <div style={{ color: 'var(--muted)', padding: '12px 0' }}>No source summaries returned from API.</div>
+          </Card>
+        )}
+
+        {/* Ingestion run history */}
+        <Card
+          title="Recent Ingestion Runs"
+          action={<span className="a-badge">{runs.length > 0 ? `${runs.length} runs` : 'live data'}</span>}
+        >
+          {runs.length > 0 ? (
+            <table className="a-table">
+              <thead>
+                <tr>
+                  <th>Source</th><th>Started</th><th>Duration</th>
+                  <th>Seen</th><th>Written</th><th>Failed</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {runs.slice(0, 10).map(r => (
+                  <tr key={r.id}>
+                    <td>
+                      <div style={{ fontWeight: 500, color: 'var(--fg)' }}>{r.sourceName}</div>
+                      <div className="a-td-sub">{r.countryCode} · {r.runType}</div>
+                    </td>
+                    <td><span className="mono" style={{ color: 'var(--muted)' }}>{fmtWhen(r.startedAt)}</span></td>
+                    <td><span className="mono">{fmtDur(r.startedAt, r.completedAt)}</span></td>
+                    <td><span className="mono">{fmt(r.recordsSeen)}</span></td>
+                    <td><span className="mono">{fmt(r.recordsWritten)}</span></td>
+                    <td><span className="mono" style={{ color: r.recordsFailed > 0 ? 'var(--warn)' : 'var(--muted)' }}>{r.recordsFailed}</span></td>
+                    <td><StatusBadge status={humanize(r.status)} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{ color: 'var(--muted)', padding: '12px 0', fontSize: '13px' }}>
+              No runs recorded yet. The Norwegian worker has written data directly — run it again to log a tracked run.
+            </div>
+          )}
+        </Card>
+
       </div>
     );
   }
@@ -758,6 +844,23 @@ export default function App() {
             </div>
           ))}
         </nav>
+
+        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+          <a
+            href="http://192.168.1.10:3014/?pgsql=postgres&username=company_data&db=company_data_dev"
+            target="_blank"
+            rel="noreferrer"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--muted)', fontSize: '12px', textDecoration: 'none', padding: '8px 10px', borderRadius: '6px', transition: 'background 0.15s' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >
+            <Icon.Database />
+            <span>Database browser</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '12px', marginLeft: 'auto', opacity: 0.4 }}>
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </a>
+        </div>
 
         <div className="a-sidebar-footer">
           <div className="a-avatar">AD</div>
