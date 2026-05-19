@@ -1,250 +1,214 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Company Data API · Docs</title>
-  <link rel="stylesheet" href="./assets/site.css" />
+  <link rel="stylesheet" href="./assets/colors_and_type.css"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+  <style>html, body { margin: 0; background: white; } * { box-sizing: border-box; }</style>
 </head>
-<body data-page="docs">
-  <div class="sidebar-overlay" id="sidebar-overlay"></div>
-  <div class="page">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">CD</div>
-        <div class="brand-copy">
-          <strong>Company Data API</strong>
-          <span>European company data infrastructure</span>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="./assets/components.jsx" data-presets="react"></script>
+  <script type="text/babel" data-presets="react">
+    function CodeBlock({ label, code }) {
+      return (
+        <div className="rounded-2xl overflow-hidden" style={{ background: "var(--brand-950)", border: "1px solid #1f2933" }}>
+          <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ background: "#1a222c", borderColor: "#1f2933" }}>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(239,68,68,0.7)" }}/>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(234,179,8,0.7)" }}/>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(34,197,94,0.7)" }}/>
+            <span className="ml-2 text-[12px] font-medium" style={{ color: "var(--brand-400)", fontFamily: "var(--font-mono)" }}>{label}</span>
+          </div>
+          <pre className="p-5 text-[13px] leading-[1.7] overflow-x-auto m-0" style={{ color: "var(--code-fg)", fontFamily: "var(--font-mono)" }}>{code}</pre>
         </div>
-      </div>
-      <nav class="topbar-nav" aria-label="Desktop navigation">
-        <a href="./" data-page-link="home">Home</a>
-        <a href="./product.html" data-page-link="product">Product</a>
-        <a href="./docs.html" data-page-link="docs">Docs</a>
-        <a href="./pricing.html" data-page-link="pricing">Pricing</a>
-        <a href="./coverage.html" data-page-link="coverage">Coverage</a>
-        <a href="./demo.html" data-page-link="demo">Demo</a>
-      </nav>
-      <div class="topbar-actions">
-        <a class="ghost-button" href="./coverage.html">Coverage</a>
-        <a class="button" href="./demo.html">Try demo</a>
-      </div>
-      <button class="menu-button" id="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-      </button>
-    </header>
+      );
+    }
 
-    <div class="layout">
-      <aside class="sidebar" id="site-nav" aria-label="Site navigation">
-        <div class="sidebar-head">
-          <div>
-            <div class="pill">Docs</div>
-            <h1>API documentation</h1>
-            <p>A small, predictable contract. Enough to make a successful request in minutes.</p>
+    function Endpoint({ method, path, auth, desc, params, response }) {
+      return (
+        <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "var(--brand-100)" }}>
+          <div className="px-6 py-5 border-b" style={{ borderColor: "var(--brand-100)", background: "var(--brand-50)" }}>
+            <div className="flex flex-wrap items-center gap-3 mb-3">
+              <span className="px-3 py-1 rounded-full text-[12px] font-bold"
+                    style={{ background: "rgba(16,185,129,0.1)", color: "#059669" }}>{method}</span>
+              <code className="text-[14px] font-medium" style={{ color: "var(--brand-900)", fontFamily: "var(--font-mono)" }}>{path}</code>
+              {auth && (
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider"
+                      style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>{auth}</span>
+              )}
+            </div>
+            <p className="text-[14px] m-0" style={{ color: "var(--brand-500)" }}>{desc}</p>
           </div>
-          <button class="close-nav" id="close-nav" type="button" aria-label="Close navigation">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
+          <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x" style={{ divideColor: "var(--brand-100)" }}>
+            <div className="p-6">
+              {params && (
+                <table className="w-full text-[13px]" style={{ borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      {["Parameter", "Type", "Notes"].map(h => (
+                        <th key={h} className="pb-2 text-left text-[11px] font-bold uppercase tracking-wider"
+                            style={{ color: "var(--brand-400)", borderBottom: "1px solid var(--brand-100)", paddingRight: 16 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {params.map(([name, type, note]) => (
+                      <tr key={name}>
+                        <td className="py-2 pr-4" style={{ borderBottom: "1px solid var(--brand-50)" }}>
+                          <code style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", fontSize: 13 }}>{name}</code>
+                        </td>
+                        <td className="py-2 pr-4" style={{ color: "var(--brand-400)", borderBottom: "1px solid var(--brand-50)" }}>{type}</td>
+                        <td className="py-2" style={{ color: "var(--brand-600)", borderBottom: "1px solid var(--brand-50)" }}>{note}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="p-6">
+              <CodeBlock label="Response" code={response}/>
+            </div>
+          </div>
         </div>
-        <div class="group">
-          <h2>Navigation</h2>
-          <div class="nav-stack">
-            <a class="nav-link" href="./" data-page-link="home">Home</a>
-            <a class="nav-link" href="./product.html" data-page-link="product">Product</a>
-            <a class="nav-link" href="./docs.html" data-page-link="docs">Docs</a>
-            <a class="nav-link" href="./pricing.html" data-page-link="pricing">Pricing</a>
-            <a class="nav-link" href="./coverage.html" data-page-link="coverage">Coverage</a>
-            <a class="nav-link" href="./demo.html" data-page-link="demo">Demo</a>
-          </div>
-        </div>
-      </aside>
+      );
+    }
 
-      <main>
-        <section class="hero">
-          <span class="eyebrow">Docs</span>
-          <h1 class="compact">A small contract. Quick to integrate.</h1>
-          <p>Base URL, one auth header, three endpoints. Most integrations are up and running in under an hour.</p>
-          <div class="hero-actions">
-            <a class="button" href="./demo.html">Try it live</a>
-            <a class="ghost-button" href="./coverage.html">See supported countries</a>
-          </div>
-        </section>
+    function App() {
+      return (
+        <>
+          <TopNav active="docs"/>
 
-        <section class="section">
-          <div class="overview-grid">
-            <div class="panel">
-              <strong>1. Set the base URL</strong>
-              <p class="muted">Base URL: <code>http://192.168.1.10:3011</code></p>
+          {/* Hero */}
+          <section className="pt-16 pb-20" style={{ background: "var(--bg-hero)" }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-7"
+                    style={{ background: "var(--accent-soft)", color: "var(--accent-strong)", border: "1px solid var(--accent-ring)", fontFamily: "var(--font-display)" }}>
+                Documentation
+              </span>
+              <h1 className="font-bold leading-[1.07] max-w-xl"
+                  style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px,5vw,56px)", letterSpacing: "-0.025em", color: "var(--brand-900)" }}>
+                A small contract. Quick to integrate.
+              </h1>
+              <p className="mt-5 text-[17px] leading-[1.6] max-w-lg" style={{ color: "var(--brand-500)" }}>
+                Base URL, one auth header, three endpoints.
+                Most integrations are up and running in under an hour.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <PrimaryButton href="./demo.html">Try it live</PrimaryButton>
+                <GhostButton href="./coverage.html">Supported countries</GhostButton>
+              </div>
             </div>
-            <div class="panel">
-              <strong>2. Add your API key</strong>
-              <p class="muted">Header: <code>x-api-key: demo_live_123</code></p>
-            </div>
-            <div class="panel">
-              <strong>3. Start with countries</strong>
-              <p class="muted">List available countries, then query companies.</p>
-            </div>
-            <div class="panel">
-              <strong>4. Run it in the demo</strong>
-              <p class="muted">The browser playground uses the exact same routes.</p>
-            </div>
-          </div>
-          <div class="docs-grid" style="margin-top: 16px;">
-            <div class="code-block">
-              <div class="code-head"><span>cURL</span></div>
-              <pre>curl "http://192.168.1.10:3011/v1/companies/search
-  ?q=Example&country=NO&limit=5" \
-  -H "x-api-key: demo_live_123"</pre>
-            </div>
-            <div class="code-block">
-              <div class="code-head"><span>JavaScript</span></div>
-              <pre>const res = await fetch(
-  "http://192.168.1.10:3011/v1/companies/search
-   ?q=Example&country=GB",
+          </section>
+
+          {/* Quick start */}
+          <section className="py-20" style={{ background: "var(--brand-50)" }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="mb-10">
+                <h2 className="text-[26px] font-bold" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--brand-900)" }}>Quick start</h2>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                {[
+                  { n: "1", title: "Set the base URL", desc: <><code style={{ fontFamily: "var(--font-mono)", background: "white", padding: "2px 6px", borderRadius: 4, fontSize: 12 }}>http://192.168.1.10:3011</code></> },
+                  { n: "2", title: "Add your API key", desc: <><code style={{ fontFamily: "var(--font-mono)", background: "white", padding: "2px 6px", borderRadius: 4, fontSize: 12 }}>x-api-key: demo_live_123</code></> },
+                  { n: "3", title: "Start with countries", desc: "List available countries, then query companies." },
+                  { n: "4", title: "Run it in the demo", desc: "The browser playground uses the exact same routes." },
+                ].map(s => (
+                  <div key={s.n} className="p-5 bg-white rounded-2xl border" style={{ borderColor: "var(--brand-100)", boxShadow: "var(--shadow-sm)" }}>
+                    <div className="w-7 h-7 rounded-full grid place-items-center text-[12px] font-bold text-white mb-3 flex-shrink-0"
+                         style={{ background: "var(--accent)" }}>{s.n}</div>
+                    <div className="font-semibold text-[14px] mb-1" style={{ color: "var(--brand-900)", fontFamily: "var(--font-display)" }}>{s.title}</div>
+                    <div className="text-[13px]" style={{ color: "var(--brand-500)" }}>{s.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="grid md:grid-cols-2 gap-5">
+                <CodeBlock label="cURL" code={`curl "http://192.168.1.10:3011/v1/companies/search?q=Equinor&country=NO&limit=5" \\
+  -H "x-api-key: demo_live_123"`}/>
+                <CodeBlock label="JavaScript" code={`const res = await fetch(
+  "http://192.168.1.10:3011/v1/companies/search?q=Equinor&country=NO",
   { headers: { "x-api-key": "demo_live_123" } }
 );
-const data = await res.json();</pre>
+const data = await res.json();`}/>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section class="endpoint">
-          <span class="eyebrow">Endpoints</span>
-          <h3>Health check</h3>
-          <div class="endpoint-grid">
-            <div class="panel">
-              <div class="endpoint-header">
-                <span class="method">GET</span>
-                <span class="path">/health</span>
-                <span class="endpoint-chip">No auth required</span>
+          {/* Endpoints */}
+          <section className="py-20" style={{ background: "white" }}>
+            <div className="max-w-7xl mx-auto px-6 space-y-8">
+              <div className="mb-10">
+                <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider mb-3"
+                      style={{ color: "var(--accent-strong)", fontFamily: "var(--font-display)" }}>Endpoints</span>
+                <h2 className="text-[26px] font-bold" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--brand-900)" }}>API reference</h2>
               </div>
-              <p>Unauthenticated heartbeat for monitoring and smoke tests.</p>
-              <div class="kv">
-                <div>Response</div>
-                <div><code>status</code>, <code>service</code>, <code>timestamp</code></div>
-                <div>Use case</div>
-                <div>Uptime monitoring, deployment checks</div>
-              </div>
-            </div>
-            <div class="code-block">
-              <div class="code-head"><span>Response</span></div>
-              <pre>{
-  "status": "ok",
-  "service": "company-data-api",
-  "timestamp": "2026-05-18T12:00:00.000Z"
-}</pre>
-            </div>
-          </div>
-        </section>
 
-        <section class="endpoint">
-          <h3>List supported countries</h3>
-          <div class="endpoint-grid">
-            <div class="panel">
-              <div class="endpoint-header">
-                <span class="method">GET</span>
-                <span class="path">/v1/meta/countries</span>
-                <span class="endpoint-chip">Requires <code>x-api-key</code></span>
-              </div>
-              <p>Returns the current country catalogue — which markets are live and their source status.</p>
-              <table>
-                <thead>
-                  <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
-                </thead>
-                <tbody>
-                  <tr><td><code>code</code></td><td>string</td><td>ISO 3166-1 alpha-2 country code</td></tr>
-                  <tr><td><code>name</code></td><td>string</td><td>Country display name</td></tr>
-                  <tr><td><code>enabled</code></td><td>boolean</td><td>Whether the country is queryable today</td></tr>
-                  <tr><td><code>sourceStatus</code></td><td>string</td><td><code>planned</code>, <code>pilot</code>, or <code>active</code></td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="code-block">
-              <div class="code-head"><span>Response</span></div>
-              <pre>{
-  "data": [
-    { "code": "NO", "name": "Norway",
-      "enabled": true, "sourceStatus": "pilot" },
-    { "code": "GB", "name": "United Kingdom",
-      "enabled": true, "sourceStatus": "pilot" }
-  ],
-  "meta": { "total": 4 }
-}</pre>
-            </div>
-          </div>
-        </section>
+              <Endpoint
+                method="GET" path="/health" auth={null}
+                desc="Unauthenticated heartbeat for monitoring and smoke tests."
+                params={[
+                  ["(none)", "—", "No parameters required."]
+                ]}
+                response={`{\n  "status": "ok",\n  "service": "company-data-api",\n  "timestamp": "2026-05-19T12:00:00.000Z"\n}`}
+              />
 
-        <section class="endpoint">
-          <h3>Search companies</h3>
-          <div class="endpoint-grid">
-            <div class="panel">
-              <div class="endpoint-header">
-                <span class="method">GET</span>
-                <span class="path">/v1/companies/search</span>
-                <span class="endpoint-chip">Requires <code>x-api-key</code></span>
-              </div>
-              <p>Search companies by name or registration number, with optional country filtering.</p>
-              <table>
-                <thead>
-                  <tr><th>Parameter</th><th>Type</th><th>Rules</th></tr>
-                </thead>
-                <tbody>
-                  <tr><td><code>q</code></td><td>string</td><td>Optional. 1–120 chars.</td></tr>
-                  <tr><td><code>country</code></td><td>string</td><td>Optional. 2-letter code: <code>NO</code>, <code>GB</code>.</td></tr>
-                  <tr><td><code>limit</code></td><td>number</td><td>Optional. 1–50, default 10.</td></tr>
-                </tbody>
-              </table>
+              <Endpoint
+                method="GET" path="/v1/meta/countries" auth="x-api-key required"
+                desc="Returns the current country catalogue — which markets are live and their source status."
+                params={[
+                  ["(none)", "—", "No parameters required."]
+                ]}
+                response={`{\n  "data": [\n    { "code": "NO", "name": "Norway",\n      "enabled": true, "sourceStatus": "active" },\n    { "code": "GB", "name": "United Kingdom",\n      "enabled": true, "sourceStatus": "active" }\n  ],\n  "meta": { "total": 3 }\n}`}
+              />
+
+              <Endpoint
+                method="GET" path="/v1/companies/search" auth="x-api-key required"
+                desc="Search companies by name or registration number, with optional country filtering."
+                params={[
+                  ["q", "string", "Optional. 1–120 chars. Company name or reg. number."],
+                  ["country", "string", "Optional. ISO code: NO, FI, GB."],
+                  ["limit", "number", "Optional. 1–50, default 10."],
+                ]}
+                response={`{\n  "data": [\n    {\n      "countryCode": "NO",\n      "registrationNumber": "986187009",\n      "name": "EQUINOR ASA",\n      "status": "active"\n    }\n  ],\n  "meta": {\n    "query": "Equinor",\n    "country": "NO",\n    "limit": 10,\n    "total": 1\n  }\n}`}
+              />
             </div>
-            <div class="code-block">
-              <div class="code-head"><span>Response</span></div>
-              <pre>{
-  "data": [
-    {
-      "countryCode": "NO",
-      "registrationNumber": "987654321",
-      "name": "Nordic Data Example AS",
-      "status": "active"
+          </section>
+
+          {/* Errors */}
+          <section className="py-20" style={{ background: "var(--brand-50)" }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="mb-10">
+                <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider mb-3"
+                      style={{ color: "var(--accent-strong)", fontFamily: "var(--font-display)" }}>Errors</span>
+                <h2 className="text-[26px] font-bold" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--brand-900)" }}>Error responses</h2>
+              </div>
+              <div className="grid md:grid-cols-2 gap-5">
+                {[
+                  { code: "401", title: "Unauthorized", desc: 'Missing or invalid x-api-key header.', body: `{\n  "error": "UNAUTHORIZED",\n  "message": "Missing or invalid API key."\n}` },
+                  { code: "400", title: "Bad Request", desc: "Query parameters fail validation — e.g. limit out of range.", body: `{\n  "error": "BAD_REQUEST",\n  "message": "Invalid search query"\n}` },
+                ].map(e => (
+                  <div key={e.code} className="p-6 bg-white rounded-2xl border" style={{ borderColor: "var(--brand-100)", boxShadow: "var(--shadow-sm)" }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[13px] font-bold" style={{ fontFamily: "var(--font-mono)", color: "var(--danger)" }}>{e.code}</span>
+                      <span className="font-semibold text-[15px]" style={{ color: "var(--brand-900)", fontFamily: "var(--font-display)" }}>{e.title}</span>
+                    </div>
+                    <p className="text-[14px] mb-4" style={{ color: "var(--brand-500)" }}>{e.desc}</p>
+                    <CodeBlock label="Response" code={e.body}/>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <Footer/>
+        </>
+      );
     }
-  ],
-  "meta": {
-    "query": "Example",
-    "country": "NO",
-    "limit": 10,
-    "total": 1
-  }
-}</pre>
-            </div>
-          </div>
-        </section>
-
-        <section class="section">
-          <span class="eyebrow">Errors</span>
-          <div class="response-grid">
-            <div class="response-card">
-              <strong>401 Unauthorized</strong>
-              <p>Missing or invalid <code>x-api-key</code> header on authenticated routes.</p>
-              <div class="code-block" style="margin-top: 14px;">
-                <pre>{
-  "error": "UNAUTHORIZED",
-  "message": "Missing or invalid API key."
-}</pre>
-              </div>
-            </div>
-            <div class="response-card">
-              <strong>400 Bad Request</strong>
-              <p>Query parameters fail validation — e.g. <code>limit</code> out of range or invalid country code.</p>
-              <div class="code-block" style="margin-top: 14px;">
-                <pre>{
-  "error": "BAD_REQUEST",
-  "message": "Invalid search query"
-}</pre>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  </div>
-  <script src="./assets/site.js"></script>
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
 </body>
 </html>

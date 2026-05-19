@@ -1,125 +1,176 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Company Data API · Coverage</title>
-  <link rel="stylesheet" href="./assets/site.css" />
+  <link rel="stylesheet" href="./assets/colors_and_type.css"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+  <style>html, body { margin: 0; background: white; } * { box-sizing: border-box; }</style>
 </head>
-<body data-page="coverage">
-  <div class="sidebar-overlay" id="sidebar-overlay"></div>
-  <div class="page">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">CD</div>
-        <div class="brand-copy">
-          <strong>Company Data API</strong>
-          <span>European company data infrastructure</span>
-        </div>
-      </div>
-      <nav class="topbar-nav" aria-label="Desktop navigation">
-        <a href="./" data-page-link="home">Home</a>
-        <a href="./product.html" data-page-link="product">Product</a>
-        <a href="./docs.html" data-page-link="docs">Docs</a>
-        <a href="./pricing.html" data-page-link="pricing">Pricing</a>
-        <a href="./coverage.html" data-page-link="coverage">Coverage</a>
-        <a href="./demo.html" data-page-link="demo">Demo</a>
-      </nav>
-      <div class="topbar-actions">
-        <a class="ghost-button" href="./pricing.html">Pricing</a>
-        <a class="button" href="./demo.html">Try demo</a>
-      </div>
-      <button class="menu-button" id="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-      </button>
-    </header>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="./assets/components.jsx" data-presets="react"></script>
+  <script type="text/babel" data-presets="react">
+    const countries = [
+      { code: "NO", name: "Norway", status: "live", source: "Brønnøysundregistrene", count: "1.16M companies", fields: "Name, org number, address, industry code, activity status", license: "NLOD 2.0" },
+      { code: "FI", name: "Finland", status: "live", source: "PRH / YTJ", count: "818K companies", fields: "Name, business ID, address, legal form, status", license: "CC BY 4.0" },
+      { code: "GB", name: "United Kingdom", status: "live", source: "Companies House", count: "Live", fields: "Name, registration number, status, address, incorporation date", license: "OGL v3" },
+      { code: "DK", name: "Denmark", status: "planned", source: "CVR", count: "~700K companies", fields: "Name, CVR number, address, industry", license: "Danish open data" },
+      { code: "FR", name: "France", status: "planned", source: "INSEE Sirene", count: "~12M companies", fields: "Name, SIREN/SIRET, address, NACE code", license: "Etalab open" },
+      { code: "SE", name: "Sweden", status: "planned", source: "Bolagsverket", count: "~1.1M companies", fields: "Name, org number, address, status", license: "TBD" },
+      { code: "BE", name: "Belgium", status: "planned", source: "CBE Open Data", count: "~1.5M companies", fields: "Name, BCE number, address, status", license: "Open data" },
+      { code: "NL", name: "Netherlands", status: "planned", source: "KVK", count: "~2.4M companies", fields: "Name, KVK number, address, industry", license: "Open (conditions)" },
+    ];
 
-    <div class="layout">
-      <aside class="sidebar" id="site-nav" aria-label="Site navigation">
-        <div class="sidebar-head">
-          <div>
-            <div class="pill">Coverage</div>
-            <h1>Which countries are live</h1>
-            <p>Active markets are available now. Planned markets are on the roadmap — clearly marked so you know what to expect.</p>
-          </div>
-          <button class="close-nav" id="close-nav" type="button" aria-label="Close navigation">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
-        </div>
-        <div class="group">
-          <h2>Navigation</h2>
-          <div class="nav-stack">
-            <a class="nav-link" href="./" data-page-link="home">Home</a>
-            <a class="nav-link" href="./product.html" data-page-link="product">Product</a>
-            <a class="nav-link" href="./docs.html" data-page-link="docs">Docs</a>
-            <a class="nav-link" href="./pricing.html" data-page-link="pricing">Pricing</a>
-            <a class="nav-link" href="./coverage.html" data-page-link="coverage">Coverage</a>
-            <a class="nav-link" href="./demo.html" data-page-link="demo">Demo</a>
-          </div>
-        </div>
-      </aside>
+    const live = { background: "rgba(16,185,129,0.08)", color: "#059669", border: "1px solid rgba(16,185,129,0.25)" };
+    const planned = { background: "rgba(210,153,34,0.08)", color: "#b45309", border: "1px solid rgba(210,153,34,0.25)" };
 
-      <main>
-        <section class="hero">
-          <span class="eyebrow">Coverage</span>
-          <h1 class="compact">Live now. More countries coming.</h1>
-          <p>We start with Norway and the United Kingdom — two markets with strong open data access and reliable official registries. Denmark and Finland follow next.</p>
-        </section>
-
-        <section class="section">
-          <div class="product-grid">
-            <div class="coverage-grid">
-              <article class="coverage-card">
-                <strong>Norway</strong>
-                <p>Data from Brønnøysundregistrene. Covers company name, org number, address, industry code, and activity status.</p>
-                <div class="quick-row">
-                  <span class="coverage-state live">NO · Live</span>
-                  <span class="result-chip">Brønnøysundregistrene</span>
-                </div>
-              </article>
-              <article class="coverage-card">
-                <strong>United Kingdom</strong>
-                <p>Data from Companies House. Covers company name, registration number, status, address, and incorporation date.</p>
-                <div class="quick-row">
-                  <span class="coverage-state live">GB · Live</span>
-                  <span class="result-chip">Companies House</span>
-                </div>
-              </article>
-              <article class="coverage-card">
-                <strong>Denmark</strong>
-                <p>Next on the roadmap. Will source from CVR — the Danish Central Business Register.</p>
-                <div class="quick-row">
-                  <span class="coverage-state planned">DK · Planned</span>
-                </div>
-              </article>
-              <article class="coverage-card">
-                <strong>Finland</strong>
-                <p>Planned for a later phase. Will source from the Finnish Business Information System (YTJ).</p>
-                <div class="quick-row">
-                  <span class="coverage-state planned">FI · Planned</span>
-                </div>
-              </article>
+    function CountryCard({ code, name, status, source, count, fields, license }) {
+      const isLive = status === "live";
+      return (
+        <div className="p-6 bg-white rounded-2xl border" style={{ borderColor: isLive ? "var(--brand-200)" : "var(--brand-100)", boxShadow: "var(--shadow-sm)" }}>
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl grid place-items-center text-[13px] font-bold flex-shrink-0"
+                    style={{ background: isLive ? "var(--brand-900)" : "var(--brand-100)", color: isLive ? "white" : "var(--brand-500)", fontFamily: "var(--font-mono)" }}>
+                {code}
+              </span>
+              <div>
+                <div className="font-semibold text-[15px]" style={{ color: "var(--brand-900)", fontFamily: "var(--font-display)" }}>{name}</div>
+                <div className="text-[12px] mt-0.5" style={{ color: "var(--brand-400)" }}>{count}</div>
+              </div>
             </div>
-
-            <div class="proof-grid">
-              <article class="proof-card">
-                <h4>Official sources only</h4>
-                <p>Every country uses data from its official government registry — not aggregated or scraped from third parties.</p>
-              </article>
-              <article class="proof-card">
-                <h4>Clear live vs. planned</h4>
-                <p>No roadmap theatre. Countries are either live and queryable today, or explicitly marked as planned.</p>
-              </article>
-              <article class="proof-card">
-                <h4>Consistent fields</h4>
-                <p>Regardless of country, the same core fields — name, registration number, status, address — are present in the response.</p>
-              </article>
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
+                  style={isLive ? live : planned}>
+              {isLive ? "Live" : "Roadmap"}
+            </span>
+          </div>
+          <div className="text-[13px] space-y-1.5">
+            <div className="flex gap-2">
+              <span style={{ color: "var(--brand-400)", minWidth: 60 }}>Source</span>
+              <span style={{ color: "var(--brand-700)" }}>{source}</span>
+            </div>
+            <div className="flex gap-2">
+              <span style={{ color: "var(--brand-400)", minWidth: 60 }}>Fields</span>
+              <span style={{ color: "var(--brand-600)" }}>{fields}</span>
+            </div>
+            <div className="flex gap-2">
+              <span style={{ color: "var(--brand-400)", minWidth: 60 }}>License</span>
+              <span style={{ color: "var(--brand-600)", fontFamily: "var(--font-mono)", fontSize: 12 }}>{license}</span>
             </div>
           </div>
-        </section>
-      </main>
-    </div>
-  </div>
-  <script src="./assets/site.js"></script>
+        </div>
+      );
+    }
+
+    function App() {
+      const liveCountries = countries.filter(c => c.status === "live");
+      const plannedCountries = countries.filter(c => c.status === "planned");
+
+      return (
+        <>
+          <TopNav active="coverage"/>
+
+          {/* Hero */}
+          <section className="pt-16 pb-20 relative overflow-hidden" style={{ background: "var(--bg-hero)" }}>
+            <img src="./assets/europe-motif.svg" alt=""
+                 className="absolute right-0 top-0 bottom-0 w-[45%] opacity-[0.20] object-cover object-left pointer-events-none hidden lg:block"/>
+            <div className="max-w-7xl mx-auto px-6 relative z-10">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-7"
+                    style={{ background: "var(--accent-soft)", color: "var(--accent-strong)", border: "1px solid var(--accent-ring)", fontFamily: "var(--font-display)" }}>
+                Coverage
+              </span>
+              <h1 className="font-bold leading-[1.07] max-w-2xl"
+                  style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px,5vw,58px)", letterSpacing: "-0.025em", color: "var(--brand-900)" }}>
+                Live now. More countries coming.
+              </h1>
+              <p className="mt-5 text-[17px] leading-[1.6] max-w-xl" style={{ color: "var(--brand-500)" }}>
+                Three markets live with daily-synced data from official government registries.
+                Denmark, France, and others are on the roadmap — clearly marked so you know what to expect.
+              </p>
+              <div className="mt-10 flex gap-6">
+                <div>
+                  <div className="text-[28px] font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--brand-900)" }}>3</div>
+                  <div className="text-[13px]" style={{ color: "var(--brand-500)" }}>Countries live</div>
+                </div>
+                <div style={{ width: 1, background: "var(--brand-100)" }}/>
+                <div>
+                  <div className="text-[28px] font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--brand-900)" }}>2M+</div>
+                  <div className="text-[13px]" style={{ color: "var(--brand-500)" }}>Companies indexed</div>
+                </div>
+                <div style={{ width: 1, background: "var(--brand-100)" }}/>
+                <div>
+                  <div className="text-[28px] font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--brand-900)" }}>Daily</div>
+                  <div className="text-[13px]" style={{ color: "var(--brand-500)" }}>Sync cadence</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Live countries */}
+          <section className="py-20" style={{ background: "white" }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="mb-10">
+                <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider mb-3"
+                      style={{ color: "#059669", fontFamily: "var(--font-display)" }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: "#10b981" }}/>
+                  Live now
+                </span>
+                <h2 className="text-[28px] font-bold" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--brand-900)" }}>
+                  Active markets — queryable today
+                </h2>
+              </div>
+              <div className="grid md:grid-cols-3 gap-5">
+                {liveCountries.map(c => <CountryCard key={c.code} {...c}/>)}
+              </div>
+            </div>
+          </section>
+
+          {/* Roadmap */}
+          <section className="py-20" style={{ background: "var(--brand-50)" }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="mb-10">
+                <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider mb-3"
+                      style={{ color: "#b45309", fontFamily: "var(--font-display)" }}>
+                  Roadmap
+                </span>
+                <h2 className="text-[28px] font-bold" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--brand-900)" }}>
+                  Coming next
+                </h2>
+              </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+                {plannedCountries.map(c => <CountryCard key={c.code} {...c}/>)}
+              </div>
+            </div>
+          </section>
+
+          {/* Principles */}
+          <section className="py-20" style={{ background: "white" }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="grid md:grid-cols-3 gap-5">
+                {[
+                  { title: "Official sources only", desc: "Every country uses data directly from its official government registry — not aggregated, not scraped from third parties." },
+                  { title: "Clear live vs. planned", desc: "No roadmap theatre. Countries are either live and queryable today, or explicitly marked as planned. Nothing in between." },
+                  { title: "Consistent fields", desc: "Regardless of country, the same core fields — name, registration number, status, address — are always present in the response." },
+                ].map(p => (
+                  <article key={p.title} className="p-7 rounded-2xl border" style={{ borderColor: "var(--brand-100)", boxShadow: "var(--shadow-sm)" }}>
+                    <h3 className="text-[16px] font-semibold mb-2" style={{ fontFamily: "var(--font-display)", color: "var(--brand-900)" }}>{p.title}</h3>
+                    <p className="text-[14px] leading-relaxed" style={{ color: "var(--brand-500)" }}>{p.desc}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <Footer/>
+        </>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
 </body>
 </html>

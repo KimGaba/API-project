@@ -1,178 +1,281 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Company Data API · Demo</title>
-  <link rel="stylesheet" href="./assets/site.css" />
+  <link rel="stylesheet" href="./assets/colors_and_type.css"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+  <style>html, body { margin: 0; background: white; } * { box-sizing: border-box; }</style>
 </head>
-<body data-page="demo">
-  <div class="sidebar-overlay" id="sidebar-overlay"></div>
-  <div class="page">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">CD</div>
-        <div class="brand-copy">
-          <strong>Company Data API</strong>
-          <span>European company data infrastructure</span>
-        </div>
-      </div>
-      <nav class="topbar-nav" aria-label="Desktop navigation">
-        <a href="./" data-page-link="home">Home</a>
-        <a href="./product.html" data-page-link="product">Product</a>
-        <a href="./docs.html" data-page-link="docs">Docs</a>
-        <a href="./pricing.html" data-page-link="pricing">Pricing</a>
-        <a href="./coverage.html" data-page-link="coverage">Coverage</a>
-        <a href="./demo.html" data-page-link="demo">Demo</a>
-      </nav>
-      <div class="topbar-actions">
-        <a class="ghost-button" href="./docs.html">Read docs</a>
-        <a class="button" href="./signup.html">Get started free</a>
-      </div>
-      <button class="menu-button" id="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-      </button>
-    </header>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="./assets/components.jsx" data-presets="react"></script>
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useRef } = React;
+    const BASE = "http://192.168.1.10:3011";
+    const DEMO_KEY = "demo_live_123";
 
-    <div class="layout">
-      <aside class="sidebar" id="site-nav" aria-label="Site navigation">
-        <div class="sidebar-head">
-          <div>
-            <div class="pill">Demo</div>
-            <h1>Live API playground</h1>
-            <p>Run real requests against the API in-browser. No signup required.</p>
-          </div>
-          <button class="close-nav" id="close-nav" type="button" aria-label="Close navigation">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
-        </div>
-        <div class="group">
-          <h2>Navigation</h2>
-          <div class="nav-stack">
-            <a class="nav-link" href="./" data-page-link="home">Home</a>
-            <a class="nav-link" href="./product.html" data-page-link="product">Product</a>
-            <a class="nav-link" href="./docs.html" data-page-link="docs">Docs</a>
-            <a class="nav-link" href="./pricing.html" data-page-link="pricing">Pricing</a>
-            <a class="nav-link" href="./coverage.html" data-page-link="coverage">Coverage</a>
-            <a class="nav-link" href="./demo.html" data-page-link="demo">Demo</a>
-          </div>
-        </div>
-      </aside>
+    const PRESETS = {
+      search:    { route: "search",    q: "Equinor", country: "NO", limit: "5" },
+      countries: { route: "countries", q: "",        country: "",   limit: "" },
+      health:    { route: "health",    q: "",        country: "",   limit: "" },
+    };
 
-      <main>
-        <section class="hero">
-          <span class="eyebrow">Demo</span>
-          <div class="hero-grid">
+    function buildUrl(route, q, country, limit) {
+      if (route === "health")    return `${BASE}/health`;
+      if (route === "countries") return `${BASE}/v1/meta/countries`;
+      const params = new URLSearchParams();
+      if (q)       params.set("q", q);
+      if (country) params.set("country", country);
+      if (limit)   params.set("limit", limit);
+      return `${BASE}/v1/companies/search?${params}`;
+    }
+
+    function Playground() {
+      const [route, setRoute]     = useState("search");
+      const [q, setQ]             = useState("Equinor");
+      const [country, setCountry] = useState("NO");
+      const [limit, setLimit]     = useState("5");
+      const [apiKey, setApiKey]   = useState(DEMO_KEY);
+      const [countries, setCountries] = useState([]);
+      const [loading, setLoading] = useState(false);
+      const [status, setStatus]   = useState(null);
+      const [timing, setTiming]   = useState(null);
+      const [response, setResponse] = useState(null);
+      const [results, setResults] = useState([]);
+
+      const url = buildUrl(route, q, country, limit);
+      const needsParams = route === "search";
+      const needsKey    = route !== "health";
+
+      useEffect(() => {
+        fetch(`${BASE}/v1/meta/countries`, { headers: { "x-api-key": DEMO_KEY } })
+          .then(r => r.json())
+          .then(d => setCountries(d.data || []))
+          .catch(() => {});
+      }, []);
+
+      async function run() {
+        setLoading(true);
+        setResponse(null);
+        setResults([]);
+        const t0 = Date.now();
+        try {
+          const headers = needsKey ? { "x-api-key": apiKey } : {};
+          const r = await fetch(url, { headers });
+          const ms = Date.now() - t0;
+          const body = await r.json();
+          setStatus(r.status);
+          setTiming(ms);
+          setResponse(JSON.stringify(body, null, 2));
+          if (route === "search" && body.data) setResults(body.data);
+        } catch (e) {
+          setStatus("ERR");
+          setTiming(Date.now() - t0);
+          setResponse(String(e));
+        }
+        setLoading(false);
+      }
+
+      function applyPreset(key) {
+        const p = PRESETS[key];
+        setRoute(p.route); setQ(p.q); setCountry(p.country); setLimit(p.limit);
+      }
+
+      const fieldStyle = {
+        width: "100%", padding: "9px 12px", borderRadius: 10,
+        border: "1px solid var(--brand-200)", background: "white",
+        color: "var(--brand-900)", fontSize: 14, fontFamily: "var(--font-ui)",
+        outline: "none",
+      };
+      const labelStyle = { display: "block", fontSize: 12, fontWeight: 600, color: "var(--brand-500)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" };
+
+      return (
+        <div className="grid lg:grid-cols-2 gap-5">
+          {/* Left: controls */}
+          <div className="rounded-2xl border p-6 space-y-4" style={{ borderColor: "var(--brand-100)", background: "var(--brand-50)" }}>
             <div>
-              <h1 class="compact">Try the live API in your browser.</h1>
-              <p>Pick an endpoint, run a request, and inspect the real JSON response. Uses the demo API key — no signup needed to evaluate.</p>
-              <div class="chip-row">
-                <span class="badge">Base URL: <code>http://192.168.1.10:3011</code></span>
-                <span class="badge">Auth: <code>x-api-key</code></span>
-                <span class="badge">Demo key: <code>demo_live_123</code></span>
-              </div>
+              <label style={labelStyle}>Endpoint</label>
+              <select value={route} onChange={e => setRoute(e.target.value)} style={fieldStyle}>
+                <option value="health">GET /health</option>
+                <option value="countries">GET /v1/meta/countries</option>
+                <option value="search">GET /v1/companies/search</option>
+              </select>
             </div>
-            <div class="hero-note">
-              <strong>What you can test</strong>
-              <p>Search companies in Norway and the UK, list supported countries, or check the health endpoint. All responses are real — not mocked.</p>
-            </div>
-          </div>
-        </section>
 
-        <section class="play-surface">
-          <span class="eyebrow">Playground</span>
-          <div class="play-header">
             <div>
-              <h3>Run a real request</h3>
-              <p class="muted">Choose an endpoint, edit the parameters, then run. The generated fetch code updates as you type.</p>
+              <label style={labelStyle}>API key</label>
+              <input value={apiKey} onChange={e => setApiKey(e.target.value)} style={fieldStyle}/>
             </div>
-            <div class="status-pill">Live — <code>192.168.1.10:3011</code></div>
-          </div>
-          <div class="play-grid">
-            <div class="panel">
-              <div class="fields">
-                <div class="field">
-                  <label for="route-select">Endpoint</label>
-                  <select id="route-select">
-                    <option value="health">GET /health</option>
-                    <option value="countries">GET /v1/meta/countries</option>
-                    <option value="search" selected>GET /v1/companies/search</option>
+
+            {needsParams && (
+              <>
+                <div>
+                  <label style={labelStyle}>Search query (q)</label>
+                  <input value={q} onChange={e => setQ(e.target.value)} placeholder="Company name or reg. number" style={fieldStyle}/>
+                </div>
+                <div>
+                  <label style={labelStyle}>Country</label>
+                  <select value={country} onChange={e => setCountry(e.target.value)} style={fieldStyle}>
+                    <option value="">All countries</option>
+                    {countries.map(c => <option key={c.code} value={c.code}>{c.name} ({c.code})</option>)}
                   </select>
                 </div>
-                <div class="field">
-                  <label for="api-key">API key</label>
-                  <input id="api-key" value="demo_live_123" />
-                  <span class="field-help">Used for all <code>/v1</code> routes.</span>
+                <div>
+                  <label style={labelStyle}>Limit</label>
+                  <input type="number" min="1" max="50" value={limit} onChange={e => setLimit(e.target.value)} style={fieldStyle}/>
                 </div>
-                <div class="field">
-                  <label for="query-input">Search query (<code>q</code>)</label>
-                  <input id="query-input" value="Example" placeholder="Company name or reg. number" />
-                </div>
-                <div class="field">
-                  <label for="country-input">Country</label>
-                  <select id="country-input">
-                    <option value="">Loading…</option>
-                  </select>
-                  <span class="field-help" id="country-help">Populated from <code>/v1/meta/countries</code>.</span>
-                </div>
-                <div class="field">
-                  <label for="limit-input">Limit</label>
-                  <input id="limit-input" type="number" min="1" max="50" value="10" />
-                </div>
-                <div class="field">
-                  <label for="request-url">Resolved URL</label>
-                  <input id="request-url" readonly />
-                </div>
-              </div>
-              <div class="button-row" style="margin-top: 16px;">
-                <button class="run-btn" id="run-request">Run request</button>
-                <button class="ghost-button" id="load-search">Search preset</button>
-                <button class="ghost-button" id="load-countries">Countries preset</button>
-                <button class="ghost-button" id="load-health">Health preset</button>
-              </div>
-              <div class="code-block" style="margin-top: 16px;">
-                <div class="code-head">
-                  <span>Generated fetch</span>
-                  <button class="copy-btn" data-copy="#playground-request">Copy</button>
-                </div>
-                <pre id="playground-request"></pre>
+              </>
+            )}
+
+            <div>
+              <label style={labelStyle}>Resolved URL</label>
+              <div className="px-3 py-2 rounded-xl text-[12px] break-all"
+                   style={{ background: "white", border: "1px solid var(--brand-200)", color: "var(--brand-600)", fontFamily: "var(--font-mono)" }}>
+                {url}
               </div>
             </div>
 
-            <div class="panel">
-              <div class="output-meta">
-                <span id="response-status">Status: waiting</span>
-                <span id="response-time">Time: —</span>
-                <span id="response-type">Content-Type: —</span>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button onClick={run} disabled={loading}
+                      className="rounded-full px-5 h-10 text-[14px] font-semibold text-white transition-all"
+                      style={{ background: loading ? "var(--brand-400)" : "var(--accent)", cursor: loading ? "wait" : "pointer" }}>
+                {loading ? "Running…" : "Run request"}
+              </button>
+              {Object.keys(PRESETS).map(k => (
+                <button key={k} onClick={() => applyPreset(k)}
+                        className="rounded-full px-4 h-10 text-[13px] font-medium transition-colors"
+                        style={{ background: "white", border: "1px solid var(--brand-200)", color: "var(--brand-600)", cursor: "pointer" }}>
+                  {k}
+                </button>
+              ))}
+            </div>
+
+            {/* Generated fetch */}
+            <div className="rounded-xl overflow-hidden" style={{ background: "var(--brand-950)", border: "1px solid #1f2933" }}>
+              <div className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider border-b"
+                   style={{ borderColor: "#1f2933", color: "var(--brand-400)", fontFamily: "var(--font-mono)", background: "#1a222c" }}>
+                Generated fetch
               </div>
-              <div class="code-block">
-                <div class="code-head">
-                  <span>Response</span>
-                  <button class="copy-btn" data-copy="#playground-response">Copy</button>
-                </div>
-                <pre id="playground-response">Choose a preset or edit the fields above, then hit Run request.</pre>
-              </div>
-              <div class="search-insights" id="search-insights">
-                <div class="search-summary" id="search-summary">
-                  <div>
-                    <strong>Search results will appear here</strong>
-                    <div class="muted">Run the company search route to see a formatted result view alongside the raw JSON.</div>
-                  </div>
-                  <div class="summary-chips">
-                    <span class="summary-chip">Formatted output</span>
-                    <span class="summary-chip">Country labels</span>
-                    <span class="summary-chip">Clear empty states</span>
-                  </div>
-                </div>
-                <div class="result-list" id="search-results"></div>
-              </div>
+              <pre className="p-4 text-[12px] leading-[1.6] m-0 overflow-x-auto" style={{ color: "var(--code-fg)", fontFamily: "var(--font-mono)" }}>
+{needsKey
+  ? `const res = await fetch(\n  "${url}",\n  { headers: { "x-api-key": "${apiKey}" } }\n);\nconst data = await res.json();`
+  : `const res = await fetch("${url}");\nconst data = await res.json();`}
+              </pre>
             </div>
           </div>
-        </section>
-      </main>
-    </div>
-  </div>
-  <script src="./assets/site.js"></script>
-  <script src="./assets/demo.js"></script>
+
+          {/* Right: response */}
+          <div className="rounded-2xl border p-6 flex flex-col gap-4" style={{ borderColor: "var(--brand-100)" }}>
+            {/* Status bar */}
+            <div className="flex items-center gap-4 text-[13px]" style={{ color: "var(--brand-500)" }}>
+              {status !== null && (
+                <>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full" style={{ background: status < 300 ? "var(--success)" : "var(--danger)" }}/>
+                    <span style={{ fontFamily: "var(--font-mono)", color: status < 300 ? "#059669" : "var(--danger)", fontWeight: 600 }}>
+                      {status}
+                    </span>
+                  </span>
+                  <span style={{ color: "var(--brand-300)" }}>·</span>
+                  <span>{timing}ms</span>
+                </>
+              )}
+              {status === null && <span style={{ color: "var(--brand-300)" }}>Run a request to see the response</span>}
+            </div>
+
+            {/* Raw JSON */}
+            <div className="rounded-xl overflow-hidden flex-1" style={{ background: "var(--brand-950)", border: "1px solid #1f2933", minHeight: 200 }}>
+              <div className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider border-b"
+                   style={{ borderColor: "#1f2933", color: "var(--brand-400)", fontFamily: "var(--font-mono)", background: "#1a222c" }}>
+                Response
+              </div>
+              <pre className="p-4 text-[12px] leading-[1.6] m-0 overflow-auto" style={{ color: "var(--code-fg)", fontFamily: "var(--font-mono)", maxHeight: 340 }}>
+                {response || "Waiting…"}
+              </pre>
+            </div>
+
+            {/* Formatted results */}
+            {results.length > 0 && (
+              <div className="space-y-3">
+                <div className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: "var(--brand-400)" }}>
+                  {results.length} result{results.length !== 1 ? "s" : ""}
+                </div>
+                {results.map((r, i) => (
+                  <div key={i} className="p-4 rounded-xl border" style={{ borderColor: "var(--brand-100)", background: "var(--brand-50)" }}>
+                    <div className="font-semibold text-[15px] mb-1" style={{ color: "var(--brand-900)", fontFamily: "var(--font-display)" }}>{r.name}</div>
+                    <div className="flex flex-wrap gap-3 text-[12px]" style={{ fontFamily: "var(--font-mono)", color: "var(--brand-500)" }}>
+                      {r.countryCode && <span>{r.countryCode}</span>}
+                      {r.registrationNumber && <span>{r.registrationNumber}</span>}
+                      {r.status && (
+                        <span className="px-2 py-0.5 rounded-full" style={{
+                          background: r.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(210,153,34,0.1)",
+                          color: r.status === "active" ? "#059669" : "#b45309"
+                        }}>{r.status}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <>
+          <TopNav active="demo"/>
+
+          {/* Hero */}
+          <section className="pt-16 pb-10" style={{ background: "var(--bg-hero)" }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-7"
+                    style={{ background: "var(--accent-soft)", color: "var(--accent-strong)", border: "1px solid var(--accent-ring)", fontFamily: "var(--font-display)" }}>
+                Live demo
+              </span>
+              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                <div>
+                  <h1 className="font-bold leading-[1.07]"
+                      style={{ fontFamily: "var(--font-display)", fontSize: "clamp(32px,4vw,50px)", letterSpacing: "-0.025em", color: "var(--brand-900)" }}>
+                    Try the API in your browser.
+                  </h1>
+                  <p className="mt-4 text-[16px]" style={{ color: "var(--brand-500)" }}>
+                    Real requests, real responses. Uses the demo API key — no signup needed.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3 text-[13px]">
+                  {[
+                    { label: "Base URL", value: "192.168.1.10:3011" },
+                    { label: "Demo key", value: "demo_live_123" },
+                  ].map(b => (
+                    <div key={b.label} className="px-4 py-2 rounded-xl" style={{ background: "white", border: "1px solid var(--brand-200)" }}>
+                      <span style={{ color: "var(--brand-400)", marginRight: 8 }}>{b.label}</span>
+                      <code style={{ fontFamily: "var(--font-mono)", color: "var(--brand-900)", fontSize: 13 }}>{b.value}</code>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Playground */}
+          <section className="pb-20 pt-6" style={{ background: "var(--brand-50)" }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <Playground/>
+            </div>
+          </section>
+
+          <Footer/>
+        </>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
 </body>
 </html>

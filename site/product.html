@@ -1,164 +1,142 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Company Data API · Product</title>
-  <link rel="stylesheet" href="./assets/site.css" />
+  <link rel="stylesheet" href="./assets/colors_and_type.css"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+  <style>html, body { margin: 0; background: white; } * { box-sizing: border-box; }</style>
 </head>
-<body data-page="product">
-  <div class="sidebar-overlay" id="sidebar-overlay"></div>
-  <div class="page">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">CD</div>
-        <div class="brand-copy">
-          <strong>Company Data API</strong>
-          <span>European company data infrastructure</span>
-        </div>
-      </div>
-      <nav class="topbar-nav" aria-label="Desktop navigation">
-        <a href="./" data-page-link="home">Home</a>
-        <a href="./product.html" data-page-link="product">Product</a>
-        <a href="./docs.html" data-page-link="docs">Docs</a>
-        <a href="./pricing.html" data-page-link="pricing">Pricing</a>
-        <a href="./coverage.html" data-page-link="coverage">Coverage</a>
-        <a href="./demo.html" data-page-link="demo">Demo</a>
-      </nav>
-      <div class="topbar-actions">
-        <a class="ghost-button" href="./docs.html">API docs</a>
-        <a class="button" href="./demo.html">Try demo</a>
-      </div>
-      <button class="menu-button" id="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-      </button>
-    </header>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="./assets/components.jsx" data-presets="react"></script>
+  <script type="text/babel" data-presets="react">
+    const useCases = [
+      { title: "KYC and compliance", desc: "Verify company registration numbers, legal names, and status before onboarding a business customer or partner." },
+      { title: "CRM enrichment", desc: "Automatically fill in company details — address, industry, registration number — from a company name search." },
+      { title: "B2B lead data", desc: "Look up companies by name to get verified registry information for sales and marketing workflows." },
+    ];
 
-    <div class="layout">
-      <aside class="sidebar" id="site-nav" aria-label="Site navigation">
-        <div class="sidebar-head">
-          <div>
-            <div class="pill">Product</div>
-            <h1>What Company Data API does</h1>
-            <p>Search, verify, and enrich company information from official European registries via a single consistent API.</p>
-          </div>
-          <button class="close-nav" id="close-nav" type="button" aria-label="Close navigation">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
-        </div>
-        <div class="group">
-          <h2>Navigation</h2>
-          <div class="nav-stack">
-            <a class="nav-link" href="./" data-page-link="home">Home</a>
-            <a class="nav-link" href="./product.html" data-page-link="product">Product</a>
-            <a class="nav-link" href="./docs.html" data-page-link="docs">Docs</a>
-            <a class="nav-link" href="./pricing.html" data-page-link="pricing">Pricing</a>
-            <a class="nav-link" href="./coverage.html" data-page-link="coverage">Coverage</a>
-            <a class="nav-link" href="./demo.html" data-page-link="demo">Demo</a>
-          </div>
-        </div>
-      </aside>
+    const capabilities = [
+      { title: "Company search", desc: "Search by name or registration number. Filter by country. Get structured results with registration number, name, status, and address." },
+      { title: "Country catalogue", desc: "Query which countries are active and what source status they carry. Use it to drive country pickers in your UI." },
+      { title: "Registration lookup", desc: "Resolve a registration number to a verified company record — useful for validation and enrichment flows." },
+      { title: "Predictable contract", desc: "Consistent field names, standard error codes (401, 400, 404), and versioned routes under /v1." },
+      { title: "Norway — live", desc: "Brønnøysundregistrene. Company name, org number, address, industry code, and activity status. 1.16M companies." },
+      { title: "Finland — live", desc: "PRH/YTJ open data. Company name, business ID, address, legal form, and status. 818K companies." },
+    ];
 
-      <main>
-        <section class="hero">
-          <div class="hero-grid">
-            <div>
-              <span class="eyebrow">Product</span>
-              <h1 class="compact">Search and verify European company data.</h1>
-              <p>Company Data API connects your product or workflow to official company registries in Norway and the United Kingdom — with more countries on the way. One API, one auth header, predictable JSON responses.</p>
-              <div class="hero-actions">
-                <a class="button" href="./demo.html">See it live</a>
-                <a class="ghost-button" href="./coverage.html">Check coverage</a>
+    function Card({ title, desc }) {
+      return (
+        <article className="p-7 bg-white rounded-2xl border transition-all"
+                 style={{ borderColor: "var(--brand-100)", boxShadow: "var(--shadow-sm)" }}
+                 onMouseEnter={e => e.currentTarget.style.boxShadow = "var(--shadow-md)"}
+                 onMouseLeave={e => e.currentTarget.style.boxShadow = "var(--shadow-sm)"}>
+          <h3 className="text-[16px] font-semibold mb-2"
+              style={{ fontFamily: "var(--font-display)", color: "var(--brand-900)" }}>{title}</h3>
+          <p className="text-[14px] leading-relaxed" style={{ color: "var(--brand-500)" }}>{desc}</p>
+        </article>
+      );
+    }
+
+    function App() {
+      return (
+        <>
+          <TopNav active="product"/>
+
+          {/* Hero */}
+          <section className="pt-16 pb-24 relative overflow-hidden" style={{ background: "var(--bg-hero)" }}>
+            <img src="./assets/europe-motif.svg" alt=""
+                 className="absolute right-[-60px] top-[20px] w-[500px] opacity-[0.25] pointer-events-none select-none hidden lg:block"/>
+            <div className="max-w-7xl mx-auto px-6 relative z-10">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-7"
+                    style={{ background: "var(--accent-soft)", color: "var(--accent-strong)", border: "1px solid var(--accent-ring)", fontFamily: "var(--font-display)" }}>
+                Product
+              </span>
+              <h1 className="font-bold leading-[1.07] max-w-2xl"
+                  style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px,5vw,58px)", letterSpacing: "-0.025em", color: "var(--brand-900)" }}>
+                Search and verify European company data.
+              </h1>
+              <p className="mt-5 text-[17px] leading-[1.6] max-w-xl" style={{ color: "var(--brand-500)" }}>
+                One API, one auth header, predictable JSON responses — connected to official
+                national registries in Norway, Finland, and the United Kingdom.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <PrimaryButton href="./demo.html">See it live</PrimaryButton>
+                <GhostButton href="./coverage.html">Check coverage</GhostButton>
+              </div>
+
+              <div className="mt-14 grid sm:grid-cols-2 gap-5 max-w-2xl">
+                {[
+                  { title: "Official registry sources", desc: "Data from Brønnøysund (NO), PRH/YTJ (FI), and Companies House (UK) — not scraped, not aggregated from unknown sources." },
+                  { title: "Built for integration", desc: "REST API with consistent field naming, standard HTTP status codes, and response shapes that don't change without notice." },
+                ].map(n => (
+                  <div key={n.title} className="p-6 rounded-2xl" style={{ background: "white", border: "1px solid var(--brand-100)", boxShadow: "var(--shadow-sm)" }}>
+                    <div className="font-semibold text-[15px] mb-2" style={{ color: "var(--brand-900)", fontFamily: "var(--font-display)" }}>{n.title}</div>
+                    <p className="text-[14px] leading-relaxed m-0" style={{ color: "var(--brand-500)" }}>{n.desc}</p>
+                  </div>
+                ))}
               </div>
             </div>
-            <div class="hero-note-grid">
-              <div class="hero-note">
-                <strong>Official registry sources</strong>
-                <p>Data comes from Brønnøysundregistrene in Norway and Companies House in the UK — not scraped, not aggregated from unknown sources.</p>
+          </section>
+
+          {/* Use cases */}
+          <section className="py-20" style={{ background: "var(--brand-50)" }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="mb-12">
+                <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider mb-3"
+                      style={{ color: "var(--accent-strong)", fontFamily: "var(--font-display)" }}>Use cases</span>
+                <h2 className="text-[30px] font-bold" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--brand-900)" }}>Who uses it and why</h2>
               </div>
-              <div class="hero-note">
-                <strong>Built for integration</strong>
-                <p>REST API with consistent field naming, standard HTTP status codes, and response shapes that don't change without notice.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="section">
-          <span class="eyebrow">Use cases</span>
-          <h3>Who uses it and why</h3>
-          <div class="surface-grid">
-            <article class="surface-card">
-              <h4>KYC and compliance</h4>
-              <p>Verify company registration numbers, legal names, and status before onboarding a business customer or partner.</p>
-            </article>
-            <article class="surface-card">
-              <h4>CRM enrichment</h4>
-              <p>Automatically fill in company details — address, industry, registration number — from a company name search.</p>
-            </article>
-            <article class="surface-card">
-              <h4>B2B lead data</h4>
-              <p>Look up companies by name to get verified registry information for sales and marketing workflows.</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="section">
-          <span class="eyebrow">Capabilities</span>
-          <div class="section-intro">
-            <div><h3>What the API gives you today</h3></div>
-            <p>A narrow but reliable set of endpoints — useful for real integrations, not just demos.</p>
-          </div>
-          <div class="surface-grid">
-            <article class="surface-card">
-              <h4>Company search</h4>
-              <p>Search by name or registration number. Filter by country. Get structured results with registration number, name, status, and address.</p>
-            </article>
-            <article class="surface-card">
-              <h4>Country catalogue</h4>
-              <p>Query which countries are active and what source status they carry. Use it to drive country pickers in your UI.</p>
-            </article>
-            <article class="surface-card">
-              <h4>Registration number lookup</h4>
-              <p>Resolve a registration number to a verified company record — useful for validation and enrichment flows.</p>
-            </article>
-            <article class="surface-card">
-              <h4>Predictable contract</h4>
-              <p>Consistent field names, standard error codes (401, 400, 404), and versioned routes under <code>/v1</code>.</p>
-            </article>
-            <article class="surface-card">
-              <h4>Norway coverage</h4>
-              <p>Live data from Brønnøysundregistrene. Company name, org number, address, industry code, and activity.</p>
-            </article>
-            <article class="surface-card">
-              <h4>UK coverage</h4>
-              <p>Live data from Companies House. Company name, registration number, status, address, and incorporation date.</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="section cta-surface">
-          <div class="cta-grid">
-            <div>
-              <span class="eyebrow" style="color: rgba(255,255,255,0.7);">Start building</span>
-              <h3 style="color: white;">Read the docs, then run a real request.</h3>
-              <p class="muted">The API contract is small. Most integrations are up and running in under an hour.</p>
-              <div class="hero-actions" style="margin-top: 18px;">
-                <a class="button" href="./docs.html">Read docs</a>
-                <a class="ghost-button" href="./demo.html" style="color: white; border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.1);">Open demo</a>
+              <div className="grid md:grid-cols-3 gap-5">
+                {useCases.map(c => <Card key={c.title} {...c}/>)}
               </div>
             </div>
-            <div class="panel" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15);">
-              <strong style="color: white; display: block; margin-bottom: 12px;">Related pages</strong>
-              <div class="footer-note"><a href="./docs.html" style="color: rgba(255,255,255,0.85);">API documentation →</a></div>
-              <div class="footer-note"><a href="./pricing.html" style="color: rgba(255,255,255,0.85);">Pricing plans →</a></div>
-              <div class="footer-note"><a href="./coverage.html" style="color: rgba(255,255,255,0.85);">Country coverage →</a></div>
+          </section>
+
+          {/* Capabilities */}
+          <section className="py-20" style={{ background: "white" }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="mb-12">
+                <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider mb-3"
+                      style={{ color: "var(--accent-strong)", fontFamily: "var(--font-display)" }}>Capabilities</span>
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <h2 className="text-[30px] font-bold" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", color: "var(--brand-900)" }}>What the API gives you today</h2>
+                  <p className="text-[15px]" style={{ color: "var(--brand-500)" }}>A narrow but reliable set of endpoints — useful for real integrations, not just demos.</p>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-3 gap-5">
+                {capabilities.map(c => <Card key={c.title} {...c}/>)}
+              </div>
             </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  </div>
-  <script src="./assets/site.js"></script>
+          </section>
+
+          {/* CTA */}
+          <section className="py-20 text-center px-6" style={{ background: "var(--bg-cta-dark)" }}>
+            <h2 className="text-[36px] font-bold mb-4 text-white"
+                style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>
+              Read the docs, then run a real request.
+            </h2>
+            <p className="text-[17px] mb-8 max-w-lg mx-auto" style={{ color: "var(--brand-300)" }}>
+              The API contract is small. Most integrations are up and running in under an hour.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <a href="./docs.html" className="rounded-full px-8 h-12 font-semibold text-[15px] inline-flex items-center justify-center"
+                 style={{ background: "white", color: "var(--brand-900)" }}>Read docs</a>
+              <a href="./demo.html" className="rounded-full px-8 h-12 font-semibold text-[15px] inline-flex items-center justify-center"
+                 style={{ color: "white", border: "1px solid var(--brand-700)" }}>Open demo</a>
+            </div>
+          </section>
+
+          <Footer/>
+        </>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
 </body>
 </html>
