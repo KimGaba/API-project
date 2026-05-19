@@ -17,7 +17,11 @@ def normalize_records(records: list[SourceRecord]) -> list[NormalizedCompany]:
                 source_record_id=record.source_record_id,
                 registration_number=payload.get("organisasjonsnummer"),
                 company_name=payload.get("navn"),
-                status=payload.get("status"),
+                status=(
+                    "bankruptcy" if payload.get("konkurs")
+                    else "liquidation" if payload.get("underAvvikling") or payload.get("underTvangsavviklingEllerTvangsopplosning")
+                    else "active"
+                ),
                 legal_form=(payload.get("organisasjonsform") or {}).get("kode"),
                 incorporation_date=payload.get("registreringsdatoEnhetsregisteret"),
                 address={

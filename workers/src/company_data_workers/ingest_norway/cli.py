@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import argparse
 import os
 
-from company_data_workers.ingest_norway.db_ingest import ingest_to_db
+from company_data_workers.ingest_norway.db_ingest import ingest_bulk_to_db, ingest_to_db
 from company_data_workers.ingest_norway.normalize import normalize_records
 from company_data_workers.ingest_norway.source import DEFAULT_BASE_URL, fetch_records
 from company_data_workers.shared.config import build_config
@@ -23,6 +24,12 @@ def _apply_live_paging_args(args: object) -> None:
 
 def main() -> None:
     parser = build_parser("ingest-norway")
+
+    # Add ingest-bulk subcommand
+    subparsers = parser._subparsers._group_actions[0]  # type: ignore[attr-defined]
+    bulk_parser = subparsers.add_parser("ingest-bulk", help="Full sync via Brønnøysund bulk download (~1.16M companies)")
+    bulk_parser.add_argument("--batch-size", type=int, default=500, help="Records per DB commit (default 500)")
+
     args = parser.parse_args()
     _apply_live_paging_args(args)
 
@@ -44,6 +51,12 @@ def main() -> None:
     elif args.command == "ingest-db":
         result = ingest_to_db(config, limit=args.limit)
         print(f"Ingested {result.written}/{result.seen} Norway records into Postgres")
+    elif args.command == "ingest-bulk":
+        batch_size = getattr(args, "batch_size", 500)
+        print(f"Starting full Norway bulk sync (batch_size={batch_size})...")
+        print("Downloading from Brønnøysund — dette tager 12-15 minutter.")
+        result = ingest_bulk_to_db(config, batch_size=batch_size)
+        print(f"Bulk sync complete: {result.written:,}/{result.seen:,} companies ingested into Postgres")
     else:
         artifacts = runner.run(limit=args.limit)
         print(

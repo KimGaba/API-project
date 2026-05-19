@@ -1,7 +1,16 @@
 from __future__ import annotations
 
+import gzip
+import io
 import os
+import shutil
+import tempfile
+from collections.abc import Iterator
+from decimal import Decimal
 from typing import Any
+
+import ijson
+import requests
 
 from company_data_workers.shared.config import WorkerConfig
 from company_data_workers.shared.http import HttpClient
@@ -9,6 +18,7 @@ from company_data_workers.shared.models import SourceRecord, utc_now_iso
 
 
 DEFAULT_BASE_URL = "https://data.brreg.no/enhetsregisteret/api/enheter"
+BULK_URL = "https://data.brreg.no/enhetsregisteret/api/enheter/lastned"
 DEFAULT_MODE = "fixture"
 DEFAULT_PAGE_SIZE = 100
 DEFAULT_MAX_PAGES = 5
@@ -207,6 +217,60 @@ def fetch_fixture_records(config: WorkerConfig, limit: int) -> list[SourceRecord
             )
         )
     return records
+
+
+def _sanitize(obj: Any) -> Any:
+    """Recursively convert Decimal → float so payloads are JSON-serializable."""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    if isinstance(obj, dict):
+        return {k: _sanitize(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize(v) for v in obj]
+    return obj
+
+
+def fetch_bulk_batches(config: WorkerConfig, batch_size: int = 500) -> Iterator[list[SourceRecord]]:
+    """Download the full Brønnøysund bulk file to disk, then yield batches of SourceRecord."""
+    tmp_path: str | None = None
+    try:
+        # Download complete file to a temp location before parsing — avoids
+        # IncompleteRead errors that occur when streaming 197MB over a long connection.
+        print("  Downloading bulk file to disk...", flush=True)
+        with tempfile.NamedTemporaryFile(suffix=".json.gz", delete=False) as tmp:
+            tmp_path = tmp.name
+            with requests.get(BULK_URL, stream=True, timeout=300) as response:
+                response.raise_for_status()
+                shutil.copyfileobj(response.raw, tmp, length=1024 * 1024)
+        print(f"  Download complete ({os.path.getsize(tmp_path) // 1_000_000} MB). Parsing...", flush=True)
+
+        fetched_at = utc_now_iso()
+        batch: list[SourceRecord] = []
+
+        with gzip.open(tmp_path, "rb") as gz:
+            for entity in ijson.items(gz, "item"):
+                org_nr = str(entity.get("organisasjonsnummer") or "").strip()
+                if not org_nr:
+                    continue
+                batch.append(
+                    SourceRecord(
+                        source_name=config.source_name,
+                        source_record_id=org_nr,
+                        fetched_at=fetched_at,
+                        payload=_sanitize(dict(entity)),
+                        metadata={"mode": "bulk-download", "source_url": BULK_URL},
+                    )
+                )
+                if len(batch) >= batch_size:
+                    yield batch
+                    batch = []
+
+        if batch:
+            yield batch
+
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 
 def fetch_records(config: WorkerConfig, limit: int) -> list[SourceRecord]:
