@@ -24,4 +24,14 @@ export type CompanySearchResult = {
     code: string | null;
     description: string | null;
   };
+  enrichment: {
+    employeeCount: number | null;
+    website: string | null;
+    shareCapital: number | null;
+    shareCapitalCurrency: string | null;
+    latestReportYear: number | null;
+    revenue: number | null;
+    operatingResult: number | null;
+    equity: number | null;
+  };
 };

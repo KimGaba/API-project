@@ -30,6 +30,11 @@ class NormalizedCompany:
     address: dict[str, Any]
     industry_codes: list[dict[str, Any]]
     raw_fetched_at: str
+    # enrichment fields — optional, populated where the source provides them
+    employee_count: int | None = None
+    website: str | None = None
+    share_capital: float | None = None
+    share_capital_currency: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

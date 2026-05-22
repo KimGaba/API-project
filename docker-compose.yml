@@ -144,6 +144,32 @@ services:
       redis:
         condition: service_healthy
 
+  # Fase 3: UK bulk sync — downloads Companies House BasicCompanyData CSV (~5M companies, no API key needed)
+  worker-uk-bulk:
+    image: python:3.12-slim
+    working_dir: /workspace/workers
+    command: sh -lc "pip install -r requirements.txt -e . -q 2>/dev/null && PYTHONPATH=src python -m company_data_workers.ingest_uk.cli ingest-bulk --batch-size 500"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://company_data:company_data_dev@postgres:5432/company_data_dev}
+    volumes:
+      - ./:/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Fase 2: Norway financials — fetches revenue/equity from Regnskapsregisteret for ~430K companies
+  worker-no-financials:
+    image: python:3.12-slim
+    working_dir: /workspace/workers
+    command: sh -lc "pip install -r requirements.txt -e . -q 2>/dev/null && PYTHONPATH=src python -m company_data_workers.ingest_norway_financials.cli --batch-size 200"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://company_data:company_data_dev@postgres:5432/company_data_dev}
+    volumes:
+      - ./:/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   raw_artifacts:

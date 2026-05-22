@@ -8,6 +8,13 @@ from company_data_workers.shared.runner import WorkerRunner, build_parser
 
 def main() -> None:
     parser = build_parser("ingest-uk")
+    subparsers = parser._subparsers._group_actions[0]  # type: ignore[attr-defined]
+    bulk_parser = subparsers.add_parser(
+        "ingest-bulk",
+        help="Full sync via Companies House BasicCompanyData bulk CSV (~5M companies)"
+    )
+    bulk_parser.add_argument("--batch-size", type=int, default=500)
+
     args = parser.parse_args()
 
     config = build_config(
@@ -25,6 +32,13 @@ def main() -> None:
         records = fetch_records(config, args.limit)
         _, normalized_path, normalized_count = runner.normalize_only(records)
         print(f"Normalized {normalized_count} UK records -> {normalized_path}")
+    elif args.command == "ingest-bulk":
+        from company_data_workers.ingest_uk.db_ingest import ingest_bulk_to_db
+        batch_size = getattr(args, "batch_size", 500)
+        print(f"Starting UK bulk sync (batch_size={batch_size})...")
+        print("Downloading Companies House BasicCompanyData — this takes 5-10 minutes.")
+        result = ingest_bulk_to_db(batch_size=batch_size)
+        print(f"Bulk sync complete: {result.written:,}/{result.seen:,} companies ingested")
     else:
         artifacts = runner.run(limit=args.limit)
         print(

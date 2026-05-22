@@ -17,7 +17,15 @@ export async function searchCompanies(input: { q?: string; country?: string; lim
       addr.city AS "address.city",
       addr.postal_code AS "address.postalCode",
       act.activity_code AS "primaryActivity.code",
-      act.activity_description AS "primaryActivity.description"
+      act.activity_description AS "primaryActivity.description",
+      c.employee_count AS "enrichment.employeeCount",
+      c.website AS "enrichment.website",
+      c.share_capital AS "enrichment.shareCapital",
+      c.share_capital_currency AS "enrichment.shareCapitalCurrency",
+      fin.report_year AS "enrichment.latestReportYear",
+      fin.revenue AS "enrichment.revenue",
+      fin.operating_result AS "enrichment.operatingResult",
+      fin.equity AS "enrichment.equity"
     FROM companies c
     LEFT JOIN source_registry sr ON sr.id = c.latest_source_id
     LEFT JOIN LATERAL (
@@ -34,6 +42,13 @@ export async function searchCompanies(input: { q?: string; country?: string; lim
       ORDER BY is_primary DESC, created_at ASC
       LIMIT 1
     ) act ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT report_year, revenue, operating_result, equity
+      FROM company_financials
+      WHERE company_id = c.id
+      ORDER BY report_year DESC
+      LIMIT 1
+    ) fin ON TRUE
     WHERE ($1::text IS NULL OR c.country_code = $1)
       AND (
         $2::text IS NULL
@@ -71,6 +86,16 @@ export async function searchCompanies(input: { q?: string; country?: string; lim
     primaryActivity: {
       code: row['primaryActivity.code'] ? String(row['primaryActivity.code']) : null,
       description: row['primaryActivity.description'] ? String(row['primaryActivity.description']) : null,
+    },
+    enrichment: {
+      employeeCount: row['enrichment.employeeCount'] != null ? Number(row['enrichment.employeeCount']) : null,
+      website: row['enrichment.website'] ? String(row['enrichment.website']) : null,
+      shareCapital: row['enrichment.shareCapital'] != null ? Number(row['enrichment.shareCapital']) : null,
+      shareCapitalCurrency: row['enrichment.shareCapitalCurrency'] ? String(row['enrichment.shareCapitalCurrency']) : null,
+      latestReportYear: row['enrichment.latestReportYear'] != null ? Number(row['enrichment.latestReportYear']) : null,
+      revenue: row['enrichment.revenue'] != null ? Number(row['enrichment.revenue']) : null,
+      operatingResult: row['enrichment.operatingResult'] != null ? Number(row['enrichment.operatingResult']) : null,
+      equity: row['enrichment.equity'] != null ? Number(row['enrichment.equity']) : null,
     }
   }));
 }

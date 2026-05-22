@@ -113,11 +113,15 @@ def upsert_company_sample(
               legal_form,
               status,
               incorporation_date,
+              website,
+              employee_count,
+              share_capital,
+              share_capital_currency,
               latest_source_id,
               latest_source_record_at,
               source_confidence
             ) VALUES (
-              %s, %s, %s, %s, %s, %s, %s::company_status, %s::date, %s::uuid, %s::timestamptz, %s
+              %s, %s, %s, %s, %s, %s, %s::company_status, %s::date, %s, %s, %s, %s, %s::uuid, %s::timestamptz, %s
             )
             ON CONFLICT (country_code, registration_number) DO UPDATE
             SET
@@ -127,6 +131,10 @@ def upsert_company_sample(
               legal_form = EXCLUDED.legal_form,
               status = EXCLUDED.status,
               incorporation_date = COALESCE(EXCLUDED.incorporation_date, companies.incorporation_date),
+              website = COALESCE(EXCLUDED.website, companies.website),
+              employee_count = COALESCE(EXCLUDED.employee_count, companies.employee_count),
+              share_capital = COALESCE(EXCLUDED.share_capital, companies.share_capital),
+              share_capital_currency = COALESCE(EXCLUDED.share_capital_currency, companies.share_capital_currency),
               latest_source_id = EXCLUDED.latest_source_id,
               latest_source_record_at = EXCLUDED.latest_source_record_at,
               source_confidence = EXCLUDED.source_confidence,
@@ -142,6 +150,10 @@ def upsert_company_sample(
                 normalized_company.legal_form,
                 map_company_status(normalized_company.status),
                 normalized_company.incorporation_date,
+                normalized_company.website,
+                normalized_company.employee_count,
+                normalized_company.share_capital,
+                normalized_company.share_capital_currency,
                 source_id,
                 normalized_company.raw_fetched_at,
                 0.9,
