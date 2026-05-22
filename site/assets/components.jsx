@@ -151,7 +151,7 @@ function Hero() {
 
           <div className="mt-14 pt-8 grid grid-cols-2 md:grid-cols-4 gap-8"
                style={{ borderTop: "1px solid var(--brand-100)" }}>
-            <Metric value="2M+" label="Companies indexed"/>
+            <Metric value="1.8M+" label="Companies indexed"/>
             <Metric value="3" label="Countries live"/>
             <Metric value="Free" label="100 req/mo, no card"/>
             <Metric value="REST" label="Simple JSON API"/>
@@ -337,7 +337,7 @@ function FeatureGrid() {
 function CoverageSection() {
   const countries = [
     { code: "NO", name: "Norway", count: "1.16M", status: "Live", chip: "./assets/chip-NO.svg" },
-    { code: "FI", name: "Finland", count: "818K",  status: "Live", chip: "./assets/chip-NO.svg" },
+    { code: "FI", name: "Finland", count: "618K",  status: "Live", chip: "./assets/chip-NO.svg" },
     { code: "UK", name: "United Kingdom", count: "Live", status: "Live", chip: "./assets/chip-UK.svg" },
     { code: "DK", name: "Denmark",  count: "~700K", status: "Roadmap", chip: "./assets/chip-DK.svg" },
     { code: "SE", name: "Sweden",   count: "~1.1M", status: "Roadmap", chip: "./assets/chip-SE.svg" },
