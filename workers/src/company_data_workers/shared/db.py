@@ -99,6 +99,7 @@ def upsert_company_sample(
     source_id: str,
     source_record: SourceRecord,
     normalized_company: NormalizedCompany,
+    license_tag: str = LICENSE_TAG_NORWAY,
 ) -> str:
     with connection.cursor() as cursor:
         cursor.execute(
@@ -268,7 +269,7 @@ def upsert_company_sample(
                 psycopg.types.json.Jsonb(source_record.payload),
                 psycopg.types.json.Jsonb(normalized_company.to_dict()),
                 source_record.fetched_at,
-                LICENSE_TAG_NORWAY,
+                license_tag,
                 0.9,
             ),
         )

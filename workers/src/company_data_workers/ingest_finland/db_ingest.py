@@ -86,6 +86,7 @@ def ingest_bulk_to_db(batch_size: int = 500) -> IngestResult:
                         source_id=source_id,
                         source_record=source_record,
                         normalized_company=nc,
+                        license_tag=LICENSE_TAG,
                     )
                     batch_written += 1
 
