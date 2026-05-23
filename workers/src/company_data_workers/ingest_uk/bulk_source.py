@@ -4,7 +4,7 @@ import csv
 import io
 import zipfile
 from collections.abc import Iterator
-from datetime import date
+from datetime import date, datetime
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -49,6 +49,17 @@ def _make_session() -> requests.Session:
     return session
 
 
+def _parse_date(raw: str) -> str | None:
+    """Convert DD/MM/YYYY (Companies House format) to YYYY-MM-DD."""
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    try:
+        return datetime.strptime(raw, "%d/%m/%Y").date().isoformat()
+    except ValueError:
+        return None
+
+
 def _parse_sic(raw: str) -> dict | None:
     """'12345 - Description' → {code, description} or None for empty/invalid."""
     raw = raw.strip()
@@ -83,7 +94,7 @@ def _row_to_record(row: dict, fetched_at: str) -> SourceRecord | None:
         "company_name":         (row.get("CompanyName") or "").strip() or None,
         "company_status":       status,
         "type":                 (row.get("CompanyCategory") or "").strip() or None,
-        "date_of_creation":     (row.get("IncorporationDate") or "").strip() or None,
+        "date_of_creation":     _parse_date(row.get("IncorporationDate")),
         "sic_codes":            [c["code"] for c in sic_codes],
         "sic_descriptions":     {c["code"]: c["description"] for c in sic_codes},
         "registered_office_address": {
