@@ -139,7 +139,9 @@ def fetch_bulk_records(
             with zf.open(csv_name) as f:
                 reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
                 for row in reader:
-                    record = _row_to_record(row, fetched_at)
+                    # CSV header has inconsistent spaces after commas — strip all keys
+                    stripped = {k.strip(): v for k, v in row.items()}
+                    record = _row_to_record(stripped, fetched_at)
                     if record:
                         batch.append(record)
                         if len(batch) >= batch_size:
