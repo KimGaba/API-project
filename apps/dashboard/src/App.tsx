@@ -97,6 +97,21 @@ type SearchResult = { id?: string; country_code?: string; countryCode?: string; 
 type CurrentUser = { id: string; email: string; displayName: string | null; emailVerified: boolean; status: string; createdAt: string };
 type ApiKey = { id: string; label: string | null; keyPrefix: string; active: boolean; lastUsedAt: string | null; createdAt: string };
 
+type AccountSubscription = {
+  id: string; planName: string; status: string; monthlyQuota: number; rpmLimit: number;
+  cancelAtPeriodEnd: boolean; billingPeriodStart: string | null; billingPeriodEnd: string | null;
+};
+type AccountData = {
+  customer: { id: string; email: string; displayName: string | null; defaultPlan: string };
+  subscription: AccountSubscription | null;
+  plan: BillingPlan | null;
+};
+type UsageData = {
+  requestsThisMonth: number; quota: number; periodStart: string; periodEnd: string;
+  daily: { date: string; count: number }[];
+  byEndpoint: { endpoint: string; count: number }[];
+};
+
 /* ── Constants ───────────────────────────────────────────── */
 const API_BASE_URL  = import.meta.env.VITE_API_BASE_URL  ?? 'http://localhost:3011';
 const DOCS_BASE_URL = import.meta.env.VITE_DOCS_BASE_URL ?? 'http://localhost:3010';
@@ -114,36 +129,6 @@ const NAV: NavDef[] = [
 const PATH_MAP: Record<string, Route> = { '/': 'overview', '/keys': 'api-keys', '/usage': 'usage', '/billing': 'billing', '/playground': 'playground', '/settings': 'settings' };
 const ROUTE_PATH: Record<Route, string> = { 'overview': '/', 'api-keys': '/keys', 'usage': '/usage', 'billing': '/billing', 'playground': '/playground', 'settings': '/settings' };
 
-const ACTIVITY = [
-  { country: 'DK', name: 'Novo Nordisk A/S',  endpoint: 'GET /v1/companies/search', time: '10 min ago',   state: '200 OK' },
-  { country: 'SE', name: 'Spotify AB',         endpoint: 'GET /v1/companies/search', time: '1 hour ago',  state: '200 OK' },
-  { country: 'SE', name: 'Klarna Bank AB',      endpoint: 'GET /v1/companies/search', time: '3 hours ago', state: '200 OK' },
-  { country: 'DE', name: 'Zalando SE',          endpoint: 'GET /v1/companies/search', time: 'Yesterday',  state: '200 OK' },
-  { country: 'DK', name: 'Maersk Line A/S',     endpoint: 'GET /v1/companies/search', time: 'Yesterday',  state: '200 OK' },
-];
-
-const ENDPOINTS = [
-  { name: '/v1/companies/search', count: '1,014', pct: 79 },
-  { name: '/v1/meta/countries',   count: '188',   pct: 15 },
-  { name: '/health',              count: '82',    pct: 6  },
-];
-
-const API_KEYS = [
-  { name: 'Production – Main App',       prefix: 'ck_live_4xP...', created: 'Oct 12, 2023', lastUsed: '2 mins ago'  },
-  { name: 'Staging Environment',          prefix: 'ck_test_9mQ...', created: 'Nov 05, 2023', lastUsed: '4 hours ago' },
-  { name: 'Developer Sandbox',            prefix: 'ck_test_2vW...', created: 'Jan 18, 2024', lastUsed: '3 days ago'  },
-];
-
-const BILLING_HISTORY = [
-  { date: 'Oct 1, 2024',  amount: '€299.00', invoice: 'INV-2024-10' },
-  { date: 'Sep 1, 2024',  amount: '€299.00', invoice: 'INV-2024-09' },
-  { date: 'Aug 1, 2024',  amount: '€299.00', invoice: 'INV-2024-08' },
-];
-
-const CHART_DATA = [40,55,30,45,60,80,65,50,70,85,90,75,60,40,55,30,45,60,80,65,50,70,85,90,75,60,85,95,100,85];
-
-const REQUESTS_THIS_MONTH = 1284;
-const MONTHLY_QUOTA = 10000;
 const maskKey = (v: string) => `${v.slice(0, 8)}••••${v.slice(-4)}`;
 const fmtQuota = (v: number) => v === 0 ? 'Custom' : v.toLocaleString();
 
@@ -169,10 +154,17 @@ export default function App() {
   const [creatingKey,   setCreatingKey]   = useState(false);
   const [revealedKey,   setRevealedKey]   = useState<string | null>(null); // shown once after creation
 
+  // real account + usage
+  const [account,       setAccount]       = useState<AccountData | null>(null);
+  const [usage,         setUsage]         = useState<UsageData | null>(null);
+  const [checkingOut,   setCheckingOut]   = useState<string | null>(null); // planCode being checked out
+
   const activeNav = useMemo(() => NAV.find(n => n.id === route) ?? NAV[0], [route]);
   const mainNav      = NAV.filter(n => n.section === 'main');
   const workspaceNav = NAV.filter(n => n.section === 'workspace');
-  const usagePct = Math.round((REQUESTS_THIS_MONTH / MONTHLY_QUOTA) * 100);
+  const requestsThisMonth = usage?.requestsThisMonth ?? 0;
+  const monthlyQuota      = usage?.quota ?? (account?.plan?.monthlyQuota ?? 100);
+  const usagePct = monthlyQuota > 0 ? Math.min(100, Math.round((requestsThisMonth / monthlyQuota) * 100)) : 0;
 
   /* routing */
   useEffect(() => {
@@ -238,6 +230,19 @@ export default function App() {
       .finally(() => setKeysLoading(false));
   }, [currentUser]);
 
+  /* load account + usage when user is known */
+  useEffect(() => {
+    if (!currentUser) return;
+    fetch(`${API_BASE_URL}/v1/account`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((d: { data?: AccountData }) => setAccount(d.data ?? null))
+      .catch(() => setAccount(null));
+    fetch(`${API_BASE_URL}/v1/usage`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((d: { data?: UsageData }) => setUsage(d.data ?? null))
+      .catch(() => setUsage(null));
+  }, [currentUser]);
+
   async function handleCreateKey() {
     setCreatingKey(true);
     try {
@@ -262,6 +267,39 @@ export default function App() {
     setApiKeys(prev => prev.filter(k => k.id !== keyId));
   }
 
+  async function handleCheckout(planCode: string) {
+    setCheckingOut(planCode);
+    try {
+      const res = await fetch(`${API_BASE_URL}/v1/billing/checkout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planCode, period: 'monthly' }),
+      });
+      const d = await res.json() as { checkoutUrl?: string; error?: string; message?: string };
+      if (d.checkoutUrl) {
+        window.location.href = d.checkoutUrl;
+      } else {
+        alert(d.message ?? 'Checkout failed');
+      }
+    } catch {
+      alert('Checkout failed');
+    } finally {
+      setCheckingOut(null);
+    }
+  }
+
+  async function handlePortal() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/v1/billing/portal`, { method: 'POST', credentials: 'include' });
+      const d = await res.json() as { portalUrl?: string; error?: string; message?: string };
+      if (d.portalUrl) window.location.href = d.portalUrl;
+      else alert(d.message ?? 'Could not open billing portal');
+    } catch {
+      alert('Could not open billing portal');
+    }
+  }
+
   async function copyText(label: string, value: string) {
     try { await navigator.clipboard.writeText(value); setCopied(label); } catch { setCopied(`Could not copy`); }
   }
@@ -280,9 +318,14 @@ export default function App() {
 
   /* ── Overview ─────────────────────────────────────────── */
   function renderOverview() {
-    const currentPlan = billingPlans[1] ?? billingPlans[0];
-    const planName  = currentPlan?.displayName ?? 'Growth Tier';
-    const planPrice = currentPlan?.code === 'starter' ? '€49' : currentPlan?.code === 'growth' ? '€299' : 'Custom';
+    const planName  = account?.plan?.displayName ?? account?.customer?.defaultPlan ?? 'Free';
+    const planPrice = account?.plan?.code === 'starter' ? '€49' : account?.plan?.code === 'growth' ? '€299' : account?.plan?.code === 'enterprise' ? 'Custom' : '€0';
+    const subStatus = account?.subscription?.status;
+    const remaining = monthlyQuota > 0 ? monthlyQuota - requestsThisMonth : null;
+
+    const periodEndDate = usage?.periodEnd ? new Date(usage.periodEnd) : null;
+    const today = new Date();
+    const daysLeft = periodEndDate ? Math.ceil((periodEndDate.getTime() - today.getTime()) / 86400000) : null;
 
     return (
       <div className="db-section-stack">
@@ -293,11 +336,13 @@ export default function App() {
               <span className="db-stat-icon"><Icon.Activity /></span>
             </div>
             <div>
-              <span className="db-stat-value">{REQUESTS_THIS_MONTH.toLocaleString()}</span>
-              <span className="db-stat-unit">/ {MONTHLY_QUOTA.toLocaleString()} calls</span>
+              <span className="db-stat-value">{requestsThisMonth.toLocaleString()}</span>
+              <span className="db-stat-unit">/ {monthlyQuota > 0 ? monthlyQuota.toLocaleString() : '∞'} calls</span>
             </div>
             <div className="db-bar"><div className="db-bar-fill" style={{ width: `${usagePct}%` }} /></div>
-            <div className="db-stat-sub">Resets in 12 days · {MONTHLY_QUOTA - REQUESTS_THIS_MONTH} remaining</div>
+            <div className="db-stat-sub">
+              {daysLeft !== null ? `Resets in ${daysLeft} days · ` : ''}{remaining !== null ? `${remaining.toLocaleString()} remaining` : ''}
+            </div>
           </div>
 
           <div className="db-stat">
@@ -311,7 +356,7 @@ export default function App() {
             </div>
             <div className="db-stat-ok">
               <Icon.CheckCircle />
-              Active and in good standing
+              {subStatus === 'active' ? 'Active and in good standing' : subStatus ? `Status: ${subStatus}` : 'Free tier'}
             </div>
           </div>
 
@@ -321,33 +366,37 @@ export default function App() {
               <span className="db-stat-icon"><Icon.Database /></span>
             </div>
             <div>
-              <span className="db-stat-value">14.2M</span>
+              <span className="db-stat-value">7.4M+</span>
               <span className="db-stat-unit">companies</span>
             </div>
-            <div className="db-stat-sub">Nordic region synced 2 hours ago.</div>
+            <div className="db-stat-sub">NO · GB · FI synced daily.</div>
           </div>
         </div>
 
         <div className="db-card">
           <div className="db-card-head">
             <div>
-              <div className="db-card-title">Recent Activity</div>
+              <div className="db-card-title">API Keys</div>
             </div>
-            <button className="db-card-action">View all logs</button>
+            <button className="db-card-action" onClick={() => go('api-keys')}>Manage keys</button>
           </div>
           <div>
-            {ACTIVITY.map(a => (
-              <div className="db-activity-row" key={a.name + a.time}>
+            {apiKeys.length === 0 ? (
+              <div style={{ padding: '20px 24px', color: 'var(--db-muted)', fontSize: '13px' }}>
+                No API keys yet. <button style={{ color: 'var(--db-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} onClick={() => go('api-keys')}>Create your first key →</button>
+              </div>
+            ) : apiKeys.slice(0, 3).map(k => (
+              <div className="db-activity-row" key={k.id}>
                 <div className="db-activity-left">
-                  <span className="db-country-tag">{a.country}</span>
+                  <span className="db-country-tag" style={{ fontFamily: 'monospace', fontSize: '11px' }}>KEY</span>
                   <div>
-                    <div className="db-activity-name">{a.name}</div>
-                    <div className="db-activity-endpoint">{a.endpoint}</div>
+                    <div className="db-activity-name">{k.label ?? 'Unnamed key'}</div>
+                    <div className="db-activity-endpoint"><code>{k.keyPrefix}…</code></div>
                   </div>
                 </div>
                 <div className="db-activity-right">
-                  <span className="db-activity-time">{a.time}</span>
-                  <span className="db-badge ok">{a.state}</span>
+                  <span className="db-activity-time">{k.lastUsedAt ? `Last used ${new Date(k.lastUsedAt).toLocaleDateString()}` : 'Never used'}</span>
+                  <span className="db-badge ok">Active</span>
                 </div>
               </div>
             ))}
@@ -437,19 +486,37 @@ export default function App() {
 
   /* ── Usage ────────────────────────────────────────────── */
   function renderUsage() {
+    const daily = usage?.daily ?? [];
+    const maxCount = daily.length > 0 ? Math.max(...daily.map(d => d.count), 1) : 1;
+    const endpoints = usage?.byEndpoint ?? [];
+    const maxEndpointCount = endpoints.length > 0 ? Math.max(...endpoints.map(e => e.count), 1) : 1;
+
+    const dateLabel = (iso: string) => {
+      const d = new Date(iso);
+      return `${d.getMonth() + 1}/${d.getDate()}`;
+    };
+
     return (
       <div className="db-section-stack">
         <div className="db-card">
           <div className="db-card-head"><div className="db-card-title">API Calls (Last 30 Days)</div></div>
           <div className="db-card-body">
-            <div className="db-bar-chart">
-              {CHART_DATA.map((v, i) => (
-                <div key={i} className="db-bar-col" style={{ height: `${v}%` }} title={`${Math.floor(v * 123)} calls`} />
-              ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '12px', color: 'var(--db-muted)' }}>
-              <span>Oct 1</span><span>Oct 15</span><span>Oct 30</span>
-            </div>
+            {daily.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px', color: 'var(--db-muted)', fontSize: '13px' }}>No usage data yet</div>
+            ) : (
+              <>
+                <div className="db-bar-chart">
+                  {daily.map((d, i) => (
+                    <div key={i} className="db-bar-col" style={{ height: `${Math.round((d.count / maxCount) * 100)}%` }} title={`${d.date}: ${d.count} calls`} />
+                  ))}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '12px', color: 'var(--db-muted)' }}>
+                  <span>{dateLabel(daily[0].date)}</span>
+                  <span>{daily[14] ? dateLabel(daily[14].date) : ''}</span>
+                  <span>{dateLabel(daily[daily.length - 1].date)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -457,13 +524,15 @@ export default function App() {
           <div className="db-card">
             <div className="db-card-head"><div className="db-card-title">Usage by Endpoint</div></div>
             <div className="db-card-body">
-              {ENDPOINTS.map(e => (
-                <div className="db-endpoint-row" key={e.name}>
+              {endpoints.length === 0 ? (
+                <div style={{ color: 'var(--db-muted)', fontSize: '13px' }}>No endpoint data yet</div>
+              ) : endpoints.map(e => (
+                <div className="db-endpoint-row" key={e.endpoint}>
                   <div className="db-endpoint-header">
-                    <span className="db-endpoint-name">{e.name}</span>
-                    <span className="db-endpoint-count">{e.count}</span>
+                    <span className="db-endpoint-name">{e.endpoint}</span>
+                    <span className="db-endpoint-count">{e.count.toLocaleString()}</span>
                   </div>
-                  <div className="db-endpoint-bar"><div className="db-endpoint-fill" style={{ width: `${e.pct}%` }} /></div>
+                  <div className="db-endpoint-bar"><div className="db-endpoint-fill" style={{ width: `${Math.round((e.count / maxEndpointCount) * 100)}%` }} /></div>
                 </div>
               ))}
             </div>
@@ -480,8 +549,8 @@ export default function App() {
                 <div className="db-bar-fill" style={{ width: `${usagePct}%` }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--db-muted)', marginTop: '8px' }}>
-                <span>{REQUESTS_THIS_MONTH.toLocaleString()} used</span>
-                <span>{MONTHLY_QUOTA.toLocaleString()} limit</span>
+                <span>{requestsThisMonth.toLocaleString()} used</span>
+                <span>{monthlyQuota > 0 ? monthlyQuota.toLocaleString() : '∞'} limit</span>
               </div>
             </div>
           </div>
@@ -492,27 +561,48 @@ export default function App() {
 
   /* ── Billing ──────────────────────────────────────────── */
   function renderBilling() {
+    const sub = account?.subscription;
+    const plan = account?.plan;
+    const currentPlanCode = sub?.planName ?? account?.customer?.defaultPlan ?? 'free';
+    const planName  = plan?.displayName ?? currentPlanCode;
+    const subStatus = sub?.status ?? 'free';
+    const hasStripe = account?.subscription?.planName && account.subscription.planName !== 'free';
+
+    const upgradablePlans = billingPlans.filter(p => p.code !== 'free' && p.code !== 'enterprise' && p.code !== currentPlanCode);
+
     return (
       <div className="db-section-stack" style={{ maxWidth: '720px' }}>
         <div className="db-card">
           <div className="db-card-head">
             <div>
-              <div className="db-card-title">Growth Plan</div>
-              <div className="db-card-intro">Billed €299 monthly. Renews Nov 1, 2024.</div>
+              <div className="db-card-title">{planName}</div>
+              <div className="db-card-intro">
+                {sub?.billingPeriodEnd ? `Renews ${new Date(sub.billingPeriodEnd).toLocaleDateString()}` : 'Free tier — no billing cycle'}
+                {sub?.cancelAtPeriodEnd ? ' · Cancels at period end' : ''}
+              </div>
             </div>
-            <span className="db-badge ok">Active</span>
+            <span className={`db-badge ${subStatus === 'active' ? 'ok' : 'blue'}`}>
+              {subStatus === 'active' ? 'Active' : subStatus.charAt(0).toUpperCase() + subStatus.slice(1)}
+            </span>
           </div>
           <div className="db-card-body">
             <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 500, display: 'flex', justifyContent: 'space-between' }}>
               <span>Monthly Request Limit</span>
-              <span style={{ color: 'var(--db-muted)' }}>{REQUESTS_THIS_MONTH.toLocaleString()} / {MONTHLY_QUOTA.toLocaleString()}</span>
+              <span style={{ color: 'var(--db-muted)' }}>{requestsThisMonth.toLocaleString()} / {monthlyQuota > 0 ? monthlyQuota.toLocaleString() : '∞'}</span>
             </div>
             <div className="db-bar" style={{ height: '8px' }}><div className="db-bar-fill" style={{ width: `${usagePct}%` }} /></div>
-            <p style={{ fontSize: '12px', color: 'var(--db-muted)', marginTop: '6px' }}>Overage billed at €0.005 per request.</p>
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '22px', paddingTop: '18px', borderTop: '1px solid var(--db-hover)' }}>
-              <button className="db-btn-outline">Manage Billing Info</button>
-              <button className="db-btn-primary">Upgrade Plan</button>
+              {hasStripe && (
+                <button className="db-btn-outline" onClick={handlePortal}>Manage Billing Info</button>
+              )}
+              {upgradablePlans.length > 0 && checkoutOk && (
+                upgradablePlans.map(p => (
+                  <button key={p.code} className="db-btn-primary" disabled={checkingOut === p.code} onClick={() => void handleCheckout(p.code)}>
+                    {checkingOut === p.code ? 'Redirecting…' : `Upgrade to ${p.displayName}`}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -523,11 +613,20 @@ export default function App() {
             <div className="db-card-body">
               <div className="db-plans-grid">
                 {billingPlans.map(p => (
-                  <div className="db-plan-card" key={p.code}>
+                  <div className={`db-plan-card ${p.code === currentPlanCode ? 'active' : ''}`} key={p.code}>
                     <div className="db-plan-name">{p.displayName}</div>
                     <div className="db-plan-quota">{fmtQuota(p.monthlyQuota)}</div>
                     <div className="db-plan-rpm">req / month</div>
                     <div className="db-plan-rpm" style={{ marginTop: '6px' }}>{p.rpmLimit === 0 ? 'Custom rpm' : `${p.rpmLimit} rpm`}</div>
+                    {p.code !== 'free' && p.code !== 'enterprise' && p.code !== currentPlanCode && checkoutOk && (
+                      <button className="db-btn-primary" style={{ marginTop: '12px', width: '100%', fontSize: '12px' }}
+                        disabled={checkingOut === p.code} onClick={() => void handleCheckout(p.code)}>
+                        {checkingOut === p.code ? 'Redirecting…' : 'Select'}
+                      </button>
+                    )}
+                    {p.code === currentPlanCode && (
+                      <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--db-ok)', fontWeight: 600 }}>Current plan</div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -536,23 +635,22 @@ export default function App() {
         )}
 
         <div className="db-card">
-          <div className="db-card-head"><div className="db-card-title">Billing History</div></div>
-          <table className="db-table">
-            <tbody>
-              {BILLING_HISTORY.map(b => (
-                <tr key={b.invoice}>
-                  <td style={{ color: 'var(--db-muted)', fontSize: '13px' }}>{b.date}</td>
-                  <td style={{ fontWeight: 600 }}>{b.amount}</td>
-                  <td><span className="db-badge ok"><Icon.Check /> Paid</span></td>
-                  <td style={{ textAlign: 'right' }}>
-                    <button className="db-card-action" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
-                      <Icon.Download /> PDF
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="db-card-head">
+            <div className="db-card-title">Billing History</div>
+            {hasStripe && <button className="db-card-action" onClick={handlePortal}>View in Stripe →</button>}
+          </div>
+          {hasStripe ? (
+            <div style={{ padding: '16px 24px', fontSize: '13px', color: 'var(--db-muted)' }}>
+              Full billing history is available in the Stripe customer portal.{' '}
+              <button style={{ color: 'var(--db-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} onClick={handlePortal}>
+                Open portal →
+              </button>
+            </div>
+          ) : (
+            <div style={{ padding: '16px 24px', fontSize: '13px', color: 'var(--db-muted)' }}>
+              No billing history — you are on the free tier.
+            </div>
+          )}
         </div>
       </div>
     );
@@ -662,18 +760,16 @@ export default function App() {
             <div className="db-form-grid" style={{ marginBottom: '16px' }}>
               <div>
                 <label className="db-form-label">Full Name</label>
-                <input className="db-form-input" type="text" defaultValue="Gaba Workspace" />
+                <input className="db-form-input" type="text" defaultValue={currentUser?.displayName ?? ''} readOnly />
               </div>
               <div>
                 <label className="db-form-label">Email Address</label>
-                <input className="db-form-input" type="email" defaultValue="demo@companydata.local" />
+                <input className="db-form-input" type="email" defaultValue={currentUser?.email ?? ''} readOnly />
               </div>
             </div>
-            <div style={{ marginBottom: '20px' }}>
-              <label className="db-form-label">Company</label>
-              <input className="db-form-input" type="text" defaultValue="Company Data Customer" />
+            <div style={{ marginBottom: '20px', fontSize: '13px', color: 'var(--db-muted)' }}>
+              Plan: <strong>{account?.plan?.displayName ?? account?.customer?.defaultPlan ?? 'Free'}</strong>
             </div>
-            <button className="db-btn-primary">Save Changes</button>
           </div>
         </div>
 

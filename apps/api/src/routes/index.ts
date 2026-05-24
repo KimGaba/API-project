@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { accountRoutes } from './account.js';
 import { adminOverviewRoutes } from './admin-overview.js';
 import { adminStatusRoutes } from './admin-status.js';
 import { authRoutes } from './auth.js';
@@ -7,6 +8,7 @@ import { companyRoutes } from './companies.js';
 import { healthRoutes } from './health.js';
 import { keysRoutes } from './keys.js';
 import { metaRoutes } from './meta.js';
+import { usageRoutes } from './usage.js';
 
 export async function registerRoutes(app: FastifyInstance) {
   await healthRoutes(app);
@@ -15,6 +17,8 @@ export async function registerRoutes(app: FastifyInstance) {
   await companyRoutes(app);
   await billingRoutes(app);
   await keysRoutes(app);
+  await accountRoutes(app);
+  await usageRoutes(app);
   await adminStatusRoutes(app);
   await adminOverviewRoutes(app);
 }
