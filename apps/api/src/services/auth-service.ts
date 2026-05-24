@@ -1,5 +1,6 @@
 import { hashPassword, verifyPassword } from './password-service.js';
 import { createUserSession } from './session-service.js';
+import { ensureCustomerForUser } from './customer-service.js';
 import { createEmailUser, getUserByNormalizedEmail, toSafeAuthUser, updateLastLoginAt } from './user-service.js';
 
 export async function signupWithEmail(input: {
@@ -19,6 +20,12 @@ export async function signupWithEmail(input: {
     email: input.email,
     passwordHash,
     displayName: input.displayName
+  });
+
+  await ensureCustomerForUser({
+    userId: user.id,
+    email: user.email,
+    displayName: input.displayName,
   });
 
   const { rawToken, session } = await createUserSession({

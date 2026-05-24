@@ -66,6 +66,73 @@ export async function validateApiKey(apiKey: string): Promise<ApiKeyAuthContext 
   return null;
 }
 
+export type ManagedApiKey = {
+  id: string;
+  label: string | null;
+  keyPrefix: string;
+  active: boolean;
+  lastUsedAt: string | null;
+  createdAt: string;
+};
+
+export async function listKeysForCustomer(customerId: string): Promise<ManagedApiKey[]> {
+  const result = await dbQuery(
+    `SELECT id::text, label, key_prefix AS "keyPrefix", active, last_used_at AS "lastUsedAt", created_at AS "createdAt"
+     FROM api_keys
+     WHERE customer_id = $1::uuid AND revoked_at IS NULL
+     ORDER BY created_at DESC`,
+    [customerId]
+  );
+  return result.rows.map((r) => ({
+    id: String(r.id),
+    label: r.label ? String(r.label) : null,
+    keyPrefix: String(r.keyPrefix ?? r.key_prefix),
+    active: Boolean(r.active),
+    lastUsedAt: r.lastUsedAt ? String(r.lastUsedAt) : null,
+    createdAt: String(r.createdAt ?? r.created_at),
+  }));
+}
+
+export async function createApiKey(input: {
+  customerId: string;
+  label?: string | null;
+}): Promise<{ key: ManagedApiKey; rawKey: string }> {
+  const raw = `cdapi_live_${crypto.randomBytes(28).toString('base64url')}`;
+  const prefix = raw.slice(0, 20);
+  const hash = hashApiKey(raw);
+
+  const result = await dbQuery(
+    `INSERT INTO api_keys (customer_id, key_prefix, key_hash, label, active)
+     VALUES ($1::uuid, $2, $3, $4, TRUE)
+     RETURNING id::text, label, key_prefix AS "keyPrefix", active, last_used_at AS "lastUsedAt", created_at AS "createdAt"`,
+    [input.customerId, prefix, hash, input.label?.trim() || null]
+  );
+
+  const row = result.rows[0];
+  if (!row) throw new Error('Failed to create API key');
+  return {
+    rawKey: raw,
+    key: {
+      id: String(row.id),
+      label: row.label ? String(row.label) : null,
+      keyPrefix: String(row['keyPrefix'] ?? row['key_prefix']),
+      active: Boolean(row.active),
+      lastUsedAt: null,
+      createdAt: String(row['createdAt'] ?? row['created_at']),
+    },
+  };
+}
+
+export async function revokeApiKey(keyId: string, customerId: string): Promise<boolean> {
+  const result = await dbQuery(
+    `UPDATE api_keys
+     SET active = FALSE, revoked_at = NOW()
+     WHERE id = $1::uuid AND customer_id = $2::uuid AND revoked_at IS NULL`,
+    [keyId, customerId]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
 export function inferUsageCategory(pathname: string): 'search' | 'lookup' | 'changes' | 'other' {
   if (pathname.includes('/search')) {
     return 'search';

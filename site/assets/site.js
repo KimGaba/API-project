@@ -77,9 +77,12 @@ function initAuthForms() {
         });
 
         if (message) {
-          message.textContent = 'Account created. You are now signed in.';
+          message.textContent = 'Account created — redirecting to dashboard…';
           message.className = 'auth-message success';
         }
+        setTimeout(() => {
+          window.location.href = `${window.location.protocol}//${window.location.hostname}:3012/`;
+        }, 600);
       } catch (error) {
         if (message) {
           message.textContent = error instanceof Error ? error.message : 'Signup failed';
@@ -107,9 +110,12 @@ function initAuthForms() {
         });
 
         if (message) {
-          message.textContent = 'Logged in successfully.';
+          message.textContent = 'Logged in — redirecting…';
           message.className = 'auth-message success';
         }
+        setTimeout(() => {
+          window.location.href = `${window.location.protocol}//${window.location.hostname}:3012/`;
+        }, 400);
       } catch (error) {
         if (message) {
           message.textContent = error instanceof Error ? error.message : 'Login failed';

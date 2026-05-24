@@ -94,6 +94,8 @@ type BillingPlan = { code: string; displayName: string; monthlyQuota: number; rp
 type BillingPlansResponse = { data?: BillingPlan[]; meta?: { mode?: string; checkoutConfigured?: boolean; publishableKeyConfigured?: boolean } };
 type HealthResponse = { status?: string; service?: string };
 type SearchResult = { id?: string; country_code?: string; countryCode?: string; name?: string; registration_number?: string; registrationNumber?: string; source?: string; status?: string };
+type CurrentUser = { id: string; email: string; displayName: string | null; emailVerified: boolean; status: string; createdAt: string };
+type ApiKey = { id: string; label: string | null; keyPrefix: string; active: boolean; lastUsedAt: string | null; createdAt: string };
 
 /* ── Constants ───────────────────────────────────────────── */
 const API_BASE_URL  = import.meta.env.VITE_API_BASE_URL  ?? 'http://localhost:3011';
@@ -159,6 +161,13 @@ export default function App() {
   const [results,       setResults]       = useState<SearchResult[]>([]);
   const [searchErr,     setSearchErr]     = useState<string | null>(null);
   const [copied,        setCopied]        = useState<string | null>(null);
+  // real user session + keys
+  const [currentUser,   setCurrentUser]   = useState<CurrentUser | null>(null);
+  const [apiKeys,       setApiKeys]       = useState<ApiKey[]>([]);
+  const [keysLoading,   setKeysLoading]   = useState(false);
+  const [newKeyLabel,   setNewKeyLabel]   = useState('');
+  const [creatingKey,   setCreatingKey]   = useState(false);
+  const [revealedKey,   setRevealedKey]   = useState<string | null>(null); // shown once after creation
 
   const activeNav = useMemo(() => NAV.find(n => n.id === route) ?? NAV[0], [route]);
   const mainNav      = NAV.filter(n => n.section === 'main');
@@ -209,6 +218,49 @@ export default function App() {
 
   useEffect(() => { document.title = `${activeNav.label} · Company Data`; }, [activeNav]);
   useEffect(() => { if (!copied) return; const t = setTimeout(() => setCopied(null), 1800); return () => clearTimeout(t); }, [copied]);
+
+  /* load session */
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/auth/me`, { credentials: 'include' })
+      .then(r => r.json())
+      .then((d: { user?: CurrentUser | null }) => setCurrentUser(d.user ?? null))
+      .catch(() => setCurrentUser(null));
+  }, []);
+
+  /* load API keys when user is known */
+  useEffect(() => {
+    if (!currentUser) return;
+    setKeysLoading(true);
+    fetch(`${API_BASE_URL}/v1/keys`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((d: { data?: ApiKey[] }) => setApiKeys(d.data ?? []))
+      .catch(() => setApiKeys([]))
+      .finally(() => setKeysLoading(false));
+  }, [currentUser]);
+
+  async function handleCreateKey() {
+    setCreatingKey(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/v1/keys`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: newKeyLabel.trim() || null }),
+      });
+      const d = await res.json() as { data?: ApiKey; rawKey?: string };
+      if (d.data) setApiKeys(prev => [d.data!, ...prev]);
+      if (d.rawKey) setRevealedKey(d.rawKey);
+      setNewKeyLabel('');
+    } finally {
+      setCreatingKey(false);
+    }
+  }
+
+  async function handleRevokeKey(keyId: string) {
+    if (!confirm('Revoke this API key? This cannot be undone.')) return;
+    await fetch(`${API_BASE_URL}/v1/keys/${keyId}`, { method: 'DELETE', credentials: 'include' });
+    setApiKeys(prev => prev.filter(k => k.id !== keyId));
+  }
 
   async function copyText(label: string, value: string) {
     try { await navigator.clipboard.writeText(value); setCopied(label); } catch { setCopied(`Could not copy`); }
@@ -309,38 +361,67 @@ export default function App() {
   function renderApiKeys() {
     return (
       <div className="db-section-stack">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: 600 }}>Active API Keys</h2>
             <p style={{ fontSize: '13px', color: 'var(--db-muted)', marginTop: '4px' }}>Manage keys for authenticating API requests.</p>
           </div>
-          <button className="db-btn-primary"><Icon.Plus /> Create New Key</button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              value={newKeyLabel}
+              onChange={e => setNewKeyLabel(e.target.value)}
+              placeholder="Label (optional)"
+              style={{ fontSize: '13px', padding: '6px 10px', border: '1px solid var(--db-border)', borderRadius: '6px', background: 'var(--db-input-bg)', color: 'var(--db-text)', width: '180px' }}
+            />
+            <button className="db-btn-primary" onClick={handleCreateKey} disabled={creatingKey}>
+              <Icon.Plus /> {creatingKey ? 'Creating…' : 'Create New Key'}
+            </button>
+          </div>
         </div>
 
+        {revealedKey && (
+          <div className="db-info-box" style={{ background: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.25)' }}>
+            <span className="db-info-icon"><Icon.CheckCircle /></span>
+            <div style={{ flex: 1 }}>
+              <div className="db-info-title">Your new API key — copy it now, it won't be shown again</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                <code style={{ fontSize: '13px', wordBreak: 'break-all', flex: 1 }}>{revealedKey}</code>
+                <button className="db-key-icon-btn" onClick={() => copyText('revealed', revealedKey)}>
+                  {copied === 'revealed' ? <Icon.Check /> : <Icon.Copy />}
+                </button>
+              </div>
+            </div>
+            <button onClick={() => setRevealedKey(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--db-muted)', fontSize: '18px', lineHeight: 1 }}>×</button>
+          </div>
+        )}
+
         <div className="db-card">
-          <table className="db-table">
-            <thead>
-              <tr><th>Name</th><th>Token Prefix</th><th>Created</th><th>Last Used</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
-            </thead>
-            <tbody>
-              {API_KEYS.map(k => (
-                <tr key={k.name}>
-                  <td><span className="db-td-main">{k.name}</span></td>
-                  <td><code className="db-code-chip">{k.prefix}</code></td>
-                  <td style={{ color: 'var(--db-muted)', fontSize: '13px' }}>{k.created}</td>
-                  <td style={{ color: 'var(--db-muted)', fontSize: '13px' }}>{k.lastUsed}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div className="db-key-actions">
-                      <button className="db-key-icon-btn" title="Copy key" onClick={() => copyText(k.name, k.prefix)}>
-                        {copied === k.name ? <Icon.Check /> : <Icon.Copy />}
-                      </button>
-                      <button className="db-key-icon-btn danger" title="Revoke key"><Icon.Trash /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {keysLoading ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--db-muted)', fontSize: '13px' }}>Loading keys…</div>
+          ) : apiKeys.length === 0 ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--db-muted)', fontSize: '13px' }}>No API keys yet. Create one above.</div>
+          ) : (
+            <table className="db-table">
+              <thead>
+                <tr><th>Label</th><th>Prefix</th><th>Created</th><th>Last Used</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
+              </thead>
+              <tbody>
+                {apiKeys.map(k => (
+                  <tr key={k.id}>
+                    <td><span className="db-td-main">{k.label ?? '—'}</span></td>
+                    <td><code className="db-code-chip">{k.keyPrefix}…</code></td>
+                    <td style={{ color: 'var(--db-muted)', fontSize: '13px' }}>{new Date(k.createdAt).toLocaleDateString()}</td>
+                    <td style={{ color: 'var(--db-muted)', fontSize: '13px' }}>{k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : 'Never'}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div className="db-key-actions">
+                        <button className="db-key-icon-btn danger" title="Revoke key" onClick={() => handleRevokeKey(k.id)}><Icon.Trash /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <div className="db-info-box">
@@ -656,12 +737,19 @@ export default function App() {
 
         <div className="db-sidebar-footer">
           <div className="db-profile">
-            <div className="db-avatar">GA</div>
-            <div>
-              <div className="db-profile-name">Gaba Workspace</div>
-              <div className="db-profile-role">Starter customer</div>
+            <div className="db-avatar">
+              {currentUser ? (currentUser.displayName ?? currentUser.email).slice(0, 2).toUpperCase() : '…'}
             </div>
-            <span className="db-profile-icon"><Icon.LogOut /></span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="db-profile-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {currentUser?.displayName ?? currentUser?.email ?? 'Loading…'}
+              </div>
+              <div className="db-profile-role">{currentUser?.email ?? ''}</div>
+            </div>
+            <span className="db-profile-icon" style={{ cursor: 'pointer' }} onClick={async () => {
+              await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+              window.location.href = `${window.location.protocol}//${window.location.hostname}:3010/login.html`;
+            }}><Icon.LogOut /></span>
           </div>
         </div>
       </aside>
