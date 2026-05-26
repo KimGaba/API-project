@@ -76,10 +76,38 @@ const Icon = {
       <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
     </svg>
   ),
+  Key: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+    </svg>
+  ),
+  Eye: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+    </svg>
+  ),
+  EyeOff: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  ),
+  Save: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+    </svg>
+  ),
 };
 
 /* ── Types ───────────────────────────────────────────────── */
-type NavId = 'overview' | 'customers' | 'billing' | 'data-pipelines' | 'system-health';
+type NavId = 'overview' | 'customers' | 'billing' | 'data-pipelines' | 'system-health' | 'config';
+
+type ConfigKeyEntry = {
+  key: string; label: string; hint: string; secret: boolean;
+  masked: string | null; source: 'db' | 'env' | 'unset'; isSet: boolean;
+};
+type ConfigGroup = { id: string; label: string; description: string; keys: ConfigKeyEntry[] };
+type AdminConfigResponse = { data?: { groups?: ConfigGroup[] } };
 
 type StatusTone = 'good' | 'warn' | 'neutral';
 
@@ -154,6 +182,7 @@ const NAV: { id: NavId; label: string; group: string; icon: keyof typeof Icon }[
   { id: 'billing',        label: 'Billing & MRR',  group: 'Dashboards',      icon: 'CreditCard' },
   { id: 'data-pipelines', label: 'Data Pipelines',  group: 'Infrastructure',  icon: 'Database'   },
   { id: 'system-health',  label: 'System Health',   group: 'Infrastructure',  icon: 'Server'     },
+  { id: 'config',         label: 'Config & Secrets', group: 'Infrastructure', icon: 'Key'        },
 ];
 
 const fallbackCustomerRows = [{
@@ -225,17 +254,23 @@ export default function App() {
   const [billingPlans, setBillingPlans] = useState<BillingPlansResponse | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [now, setNow] = useState(() => new Date());
+  const [adminConfig, setAdminConfig] = useState<AdminConfigResponse | null>(null);
+  const [configDraft, setConfigDraft] = useState<Record<string, string>>({});
+  const [configReveal, setConfigReveal] = useState<Set<string>>(new Set());
+  const [configSaving, setConfigSaving] = useState(false);
+  const [configSaved, setConfigSaved] = useState<string | null>(null);
 
   const activeNav = useMemo(() => NAV.find(n => n.id === active) ?? NAV[0], [active]);
 
   async function loadData() {
     setLoad(c => ({ ...c, loading: true, error: null }));
     try {
-      const [hRes, asRes, aoRes, bpRes] = await Promise.allSettled([
+      const [hRes, asRes, aoRes, bpRes, acRes] = await Promise.allSettled([
         fetch(`${API_BASE_URL}/health`),
         fetch(`${API_BASE_URL}/v1/admin/status`),
         fetch(`${API_BASE_URL}/v1/admin/overview`),
-        fetch(`${API_BASE_URL}/v1/billing/plans`)
+        fetch(`${API_BASE_URL}/v1/billing/plans`),
+        fetch(`${API_BASE_URL}/v1/admin/config`),
       ]);
       let reachable = false;
       const errs: string[] = [];
@@ -243,13 +278,15 @@ export default function App() {
       let nextAs: AdminStatusResponse | null = null;
       let nextAo: AdminOverviewResponse | null = null;
       let nextBp: BillingPlansResponse | null = null;
+      let nextAc: AdminConfigResponse | null = null;
 
       if (hRes.status === 'fulfilled' && hRes.value.ok) { reachable = true; nextH = await hRes.value.json() as HealthResponse; } else errs.push('health');
       if (asRes.status === 'fulfilled' && asRes.value.ok) { reachable = true; nextAs = await asRes.value.json() as AdminStatusResponse; } else errs.push('admin status');
       if (aoRes.status === 'fulfilled' && aoRes.value.ok) { reachable = true; nextAo = await aoRes.value.json() as AdminOverviewResponse; } else errs.push('admin overview');
       if (bpRes.status === 'fulfilled' && bpRes.value.ok) { reachable = true; nextBp = await bpRes.value.json() as BillingPlansResponse; } else errs.push('billing plans');
+      if (acRes.status === 'fulfilled' && acRes.value.ok) { reachable = true; nextAc = await acRes.value.json() as AdminConfigResponse; } else errs.push('admin config');
 
-      setHealth(nextH); setAdminStatus(nextAs); setAdminOverview(nextAo); setBillingPlans(nextBp);
+      setHealth(nextH); setAdminStatus(nextAs); setAdminOverview(nextAo); setBillingPlans(nextBp); setAdminConfig(nextAc);
       setLoad({ loading: false, error: errs.length === 4 ? `Could not reach ${API_BASE_URL}. Showing fallback data.` : null, lastUpdated: new Date().toISOString(), apiReachable: reachable });
     } catch (err) {
       setLoad({ loading: false, error: err instanceof Error ? err.message : 'Load failed', lastUpdated: new Date().toISOString(), apiReachable: false });
@@ -809,6 +846,143 @@ export default function App() {
     );
   }
 
+  /* ── Config ──────────────────────────────────────────── */
+  function renderConfig() {
+    const groups = adminConfig?.data?.groups ?? [];
+
+    async function saveGroup(groupId: string) {
+      const group = groups.find(g => g.id === groupId);
+      if (!group) return;
+      const payload: Record<string, string> = {};
+      for (const k of group.keys) {
+        if (configDraft[k.key] !== undefined) payload[k.key] = configDraft[k.key];
+      }
+      if (Object.keys(payload).length === 0) return;
+      setConfigSaving(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/v1/admin/config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          setConfigSaved(groupId);
+          setTimeout(() => setConfigSaved(null), 3000);
+          setConfigDraft(d => {
+            const next = { ...d };
+            for (const k of group.keys) delete next[k.key];
+            return next;
+          });
+          void loadData();
+        }
+      } finally {
+        setConfigSaving(false);
+      }
+    }
+
+    const sourceBadge = (source: string) =>
+      source === 'db' ? <span className="a-badge ok" style={{ fontSize: '11px' }}>DB</span>
+      : source === 'env' ? <span className="a-badge" style={{ fontSize: '11px' }}>ENV</span>
+      : <span className="a-badge" style={{ fontSize: '11px', opacity: 0.5 }}>unset</span>;
+
+    return (
+      <div className="a-col" style={{ maxWidth: '760px' }}>
+        <div className="a-callout" style={{ background: 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)', color: 'var(--text)' }}>
+          <Icon.Alert />
+          <span>
+            Values saved here are stored in the database and take precedence over environment variables.
+            Changes take effect immediately — no restart needed.
+          </span>
+        </div>
+
+        {groups.map(group => {
+          const groupDirty = group.keys.some(k => configDraft[k.key] !== undefined);
+          return (
+            <div className="a-card" key={group.id}>
+              <div className="a-card-head">
+                <div>
+                  <span className="a-card-title">{group.label}</span>
+                  <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '4px' }}>{group.description}</div>
+                </div>
+                <button
+                  className="a-btn"
+                  disabled={!groupDirty || configSaving}
+                  onClick={() => void saveGroup(group.id)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  {configSaved === group.id
+                    ? <><Icon.Check /> Saved</>
+                    : <><Icon.Save /> Save {group.label}</>}
+                </button>
+              </div>
+              <div className="a-card-body">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {group.keys.map(entry => {
+                    const revealed = configReveal.has(entry.key);
+                    const draft = configDraft[entry.key];
+                    return (
+                      <div key={entry.key}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                          <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>{entry.label}</label>
+                          {sourceBadge(draft !== undefined ? 'db' : entry.source)}
+                          {entry.isSet && !draft && (
+                            <span style={{ fontSize: '12px', color: 'var(--ok)' }}>
+                              <Icon.Check /> Set
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <div style={{ flex: 1, position: 'relative' }}>
+                            <input
+                              type={entry.secret && !revealed ? 'password' : 'text'}
+                              placeholder={entry.isSet && draft === undefined ? (entry.masked ?? entry.hint) : entry.hint}
+                              value={draft ?? ''}
+                              onChange={e => setConfigDraft(d => ({ ...d, [entry.key]: e.target.value }))}
+                              style={{
+                                width: '100%', boxSizing: 'border-box',
+                                padding: '8px 36px 8px 10px', fontSize: '13px',
+                                border: `1px solid ${draft !== undefined ? 'var(--ok)' : 'var(--border)'}`,
+                                borderRadius: '6px', background: 'var(--surface)',
+                                color: 'var(--text)', fontFamily: 'monospace',
+                              }}
+                            />
+                            {entry.secret && (
+                              <button
+                                onClick={() => setConfigReveal(s => {
+                                  const n = new Set(s);
+                                  n.has(entry.key) ? n.delete(entry.key) : n.add(entry.key);
+                                  return n;
+                                })}
+                                style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '2px', width: '18px', height: '18px' }}
+                                title={revealed ? 'Hide' : 'Show'}
+                              >
+                                {revealed ? <Icon.EyeOff /> : <Icon.Eye />}
+                              </button>
+                            )}
+                          </div>
+                          {draft !== undefined && (
+                            <button
+                              className="a-btn"
+                              onClick={() => setConfigDraft(d => { const n = { ...d }; delete n[entry.key]; return n; })}
+                              style={{ flexShrink: 0 }}
+                            >
+                              <Icon.X />
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px', fontFamily: 'monospace' }}>{entry.key}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   /* ── Render ───────────────────────────────────────────── */
   return (
     <div className="a-root">
@@ -898,6 +1072,7 @@ export default function App() {
           {active === 'billing'         && renderBilling()}
           {active === 'data-pipelines'  && renderPipelines()}
           {active === 'system-health'   && renderHealth()}
+          {active === 'config'          && renderConfig()}
         </main>
       </div>
     </div>

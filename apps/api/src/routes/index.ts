@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { accountRoutes } from './account.js';
+import { adminConfigRoutes } from './admin-config.js';
 import { adminOverviewRoutes } from './admin-overview.js';
 import { adminStatusRoutes } from './admin-status.js';
 import { authRoutes } from './auth.js';
@@ -21,4 +22,5 @@ export async function registerRoutes(app: FastifyInstance) {
   await usageRoutes(app);
   await adminStatusRoutes(app);
   await adminOverviewRoutes(app);
+  await adminConfigRoutes(app);
 }

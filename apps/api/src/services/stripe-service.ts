@@ -2,12 +2,12 @@ import Stripe from 'stripe';
 import { getBillingPlan } from '../config/billing.js';
 import type { BillingPlanCode } from '../config/billing.js';
 import { env } from '../config/env.js';
+import { getConfigValue } from './config-service.js';
 
-function getStripe(): Stripe {
-  if (!env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is not configured');
-  }
-  return new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' });
+async function getStripe(): Promise<Stripe> {
+  const secretKey = await getConfigValue('STRIPE_SECRET_KEY') ?? env.STRIPE_SECRET_KEY;
+  if (!secretKey) throw new Error('STRIPE_SECRET_KEY is not configured');
+  return new Stripe(secretKey, { apiVersion: '2025-02-24.acacia' });
 }
 
 export async function createCheckoutSession(input: {
@@ -17,7 +17,7 @@ export async function createCheckoutSession(input: {
   planCode: BillingPlanCode;
   period: 'monthly' | 'yearly';
 }): Promise<string> {
-  const stripe = getStripe();
+  const stripe = await getStripe();
   const plan = getBillingPlan(input.planCode);
 
   if (!plan) throw new Error(`Unknown plan: ${input.planCode}`);
@@ -30,8 +30,8 @@ export async function createCheckoutSession(input: {
 
   if (!priceEnvKey) throw new Error(`No price configured for ${input.planCode} ${input.period}`);
 
-  const priceId = process.env[priceEnvKey];
-  if (!priceId) throw new Error(`Environment variable ${priceEnvKey} is not set`);
+  const priceId = await getConfigValue(priceEnvKey);
+  if (!priceId) throw new Error(`${priceEnvKey} is not configured`);
 
   const params: Stripe.Checkout.SessionCreateParams = {
     mode: 'subscription',
@@ -58,7 +58,7 @@ export async function createCheckoutSession(input: {
 }
 
 export async function createPortalSession(stripeCustomerId: string): Promise<string> {
-  const stripe = getStripe();
+  const stripe = await getStripe();
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
     return_url: `${env.DASHBOARD_BASE_URL}/billing`,
@@ -70,6 +70,11 @@ export async function constructWebhookEvent(
   rawBody: Buffer,
   signature: string,
 ): Promise<Stripe.Event> {
-  const stripe = getStripe();
-  return stripe.webhooks.constructEvent(rawBody, signature, env.STRIPE_WEBHOOK_SECRET);
+  const stripe = await getStripe();
+  const webhookSecret = await getConfigValue('STRIPE_WEBHOOK_SECRET') ?? env.STRIPE_WEBHOOK_SECRET;
+  return stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+}
+
+export async function getStripePublishableKey(): Promise<string | null> {
+  return (await getConfigValue('STRIPE_PUBLISHABLE_KEY')) ?? env.STRIPE_PUBLISHABLE_KEY ?? null;
 }
