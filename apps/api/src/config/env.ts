@@ -14,6 +14,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().optional(),
   SESSION_SECRET: z.string().min(16).default('replace_me_with_a_long_random_secret'),
   APP_BASE_URL: z.string().url().default('http://localhost:3010'),
+  API_PUBLIC_URL: z.string().url().default('http://localhost:3011'),
   DASHBOARD_BASE_URL: z.string().url().default('http://localhost:3012'),
   COOKIE_DOMAIN: z.string().default(''),
   AUTH_SESSION_TTL_DAYS: z.coerce.number().int().positive().default(14),

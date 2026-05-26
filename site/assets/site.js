@@ -54,6 +54,32 @@ async function postJson(url, payload) {
   return data;
 }
 
+function initOAuthButtons() {
+  // Show error from OAuth redirect if present
+  const params = new URLSearchParams(window.location.search);
+  const oauthError = params.get('error');
+  if (oauthError) {
+    const messageEl = document.getElementById('login-message') || document.getElementById('signup-message');
+    if (messageEl) {
+      const messages = {
+        oauth_not_configured: 'This login method is not configured yet. Use email/password instead.',
+        oauth_denied: 'Login was cancelled.',
+        oauth_state: 'Login session expired — please try again.',
+        oauth_failed: 'Login failed — please try again or use email/password.',
+      };
+      messageEl.textContent = messages[oauthError] || `Login error: ${oauthError}`;
+      messageEl.className = 'auth-message error';
+    }
+  }
+
+  document.querySelectorAll('[data-oauth]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const provider = btn.dataset.oauth;
+      window.location.href = `${apiOrigin}/auth/oauth/${provider}`;
+    });
+  });
+}
+
 function initAuthForms() {
   const signupForm = document.getElementById('signup-form');
   const loginForm = document.getElementById('login-form');
@@ -128,5 +154,6 @@ function initAuthForms() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initSiteChrome();
+  initOAuthButtons();
   initAuthForms();
 });

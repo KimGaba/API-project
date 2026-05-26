@@ -1,10 +1,14 @@
+import { randomBytes } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { env } from '../config/env.js';
 import { getSessionCookieOptions, SESSION_COOKIE_NAME } from '../lib/auth.js';
 import { attachAuthSession } from '../middleware/auth-session.js';
-import { loginWithEmail, signupWithEmail } from '../services/auth-service.js';
+import { loginWithEmail, loginWithOAuth, signupWithEmail } from '../services/auth-service.js';
+import { buildGitHubAuthUrl, buildGoogleAuthUrl, exchangeGitHubCode, exchangeGoogleCode } from '../services/oauth-service.js';
 import { revokeSessionByRawToken } from '../services/session-service.js';
+
+const OAUTH_STATE_COOKIE = 'oauth_state';
 
 const signupSchema = z.object({
   email: z.string().trim().email().max(320),
@@ -93,6 +97,80 @@ export async function authRoutes(app: FastifyInstance) {
         error: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password'
       });
+    }
+  });
+
+  // OAuth: redirect to provider
+  app.get('/auth/oauth/:provider', async (request, reply) => {
+    const { provider } = request.params as { provider: string };
+    if (!['github', 'google'].includes(provider)) {
+      return reply.code(404).send({ error: 'UNKNOWN_PROVIDER' });
+    }
+
+    const state = randomBytes(16).toString('hex');
+    const callbackUrl = `${env.API_PUBLIC_URL}/auth/callback/${provider}`;
+
+    const authUrl = provider === 'github'
+      ? await buildGitHubAuthUrl(state, callbackUrl)
+      : await buildGoogleAuthUrl(state, callbackUrl);
+
+    if (!authUrl) {
+      return reply.redirect(`${env.APP_BASE_URL}/login.html?error=oauth_not_configured`);
+    }
+
+    reply.setCookie(OAUTH_STATE_COOKIE, state, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: env.NODE_ENV === 'production',
+      maxAge: 600,
+    });
+
+    return reply.redirect(authUrl);
+  });
+
+  // OAuth: handle provider callback
+  app.get('/auth/callback/:provider', async (request, reply) => {
+    const { provider } = request.params as { provider: string };
+    const { code, state, error } = request.query as { code?: string; state?: string; error?: string };
+
+    const loginUrl = `${env.APP_BASE_URL}/login.html`;
+    const dashboardUrl = env.DASHBOARD_BASE_URL;
+
+    if (error || !code || !state) {
+      return reply.redirect(`${loginUrl}?error=oauth_denied`);
+    }
+
+    const storedState = request.cookies[OAUTH_STATE_COOKIE];
+    if (!storedState || storedState !== state) {
+      return reply.redirect(`${loginUrl}?error=oauth_state`);
+    }
+
+    reply.clearCookie(OAUTH_STATE_COOKIE, { path: '/' });
+
+    try {
+      const callbackUrl = `${env.API_PUBLIC_URL}/auth/callback/${provider}`;
+      const profile = provider === 'github'
+        ? await exchangeGitHubCode(code, callbackUrl)
+        : provider === 'google'
+          ? await exchangeGoogleCode(code, callbackUrl)
+          : null;
+
+      if (!profile) return reply.redirect(`${loginUrl}?error=unknown_provider`);
+
+      const result = await loginWithOAuth({
+        provider,
+        ...profile,
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'] ?? null,
+      });
+
+      reply.setCookie(SESSION_COOKIE_NAME, result.rawToken, getSessionCookieOptions());
+      return reply.redirect(dashboardUrl);
+    } catch (err) {
+      request.log.warn({ err }, 'OAuth callback failed');
+      const msg = err instanceof Error ? encodeURIComponent(err.message) : 'oauth_error';
+      return reply.redirect(`${loginUrl}?error=${msg}`);
     }
   });
 

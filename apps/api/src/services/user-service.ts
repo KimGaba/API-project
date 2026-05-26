@@ -133,6 +133,27 @@ export async function createEmailUser(input: {
   return mapUser(row);
 }
 
+export async function createOAuthUser(input: {
+  email: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+}) {
+  const normalizedEmail = normalizeEmail(input.email);
+  const result = await query<{
+    id: string; email: string; email_normalized: string; email_verified_at: string | null;
+    password_hash: string | null; display_name: string | null; avatar_url: string | null;
+    status: string; last_login_at: string | null; created_at: string; updated_at: string;
+  }>(
+    `INSERT INTO users (email, email_normalized, display_name, avatar_url, email_verified_at)
+     VALUES ($1, $2, $3, $4, NOW())
+     RETURNING id, email, email_normalized, email_verified_at, password_hash, display_name, avatar_url, status, last_login_at, created_at, updated_at`,
+    [input.email.trim(), normalizedEmail, input.displayName?.trim() || null, input.avatarUrl || null]
+  );
+  const row = result.rows[0];
+  if (!row) throw new Error('Failed to create OAuth user');
+  return mapUser(row);
+}
+
 export async function updateLastLoginAt(userId: string) {
   await query(
     `UPDATE users
