@@ -887,13 +887,21 @@ export default function App() {
 
     return (
       <div className="a-col" style={{ maxWidth: '760px' }}>
-        <div className="a-callout" style={{ background: 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)', color: 'var(--text)' }}>
-          <Icon.Alert />
+        <div className="a-callout" style={{ background: 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)', color: 'var(--text)', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+          <span style={{ width: '14px', height: '14px', flexShrink: 0, display: 'inline-flex', marginTop: '1px' }}><Icon.Alert /></span>
           <span>
             Values saved here are stored in the database and take precedence over environment variables.
             Changes take effect immediately — no restart needed.
           </span>
         </div>
+
+        {groups.length === 0 && (
+          <div className="a-card">
+            <div className="a-card-body" style={{ textAlign: 'center', padding: '40px', color: 'var(--muted)', fontSize: '13px' }}>
+              Could not load config — API not reachable. Check that the API is running and refresh.
+            </div>
+          </div>
+        )}
 
         {groups.map(group => {
           const groupDirty = group.keys.some(k => configDraft[k.key] !== undefined);
