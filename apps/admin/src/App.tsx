@@ -287,7 +287,7 @@ export default function App() {
       if (acRes.status === 'fulfilled' && acRes.value.ok) { reachable = true; nextAc = await acRes.value.json() as AdminConfigResponse; } else errs.push('admin config');
 
       setHealth(nextH); setAdminStatus(nextAs); setAdminOverview(nextAo); setBillingPlans(nextBp); setAdminConfig(nextAc);
-      setLoad({ loading: false, error: errs.length === 4 ? `Could not reach ${API_BASE_URL}. Showing fallback data.` : null, lastUpdated: new Date().toISOString(), apiReachable: reachable });
+      setLoad({ loading: false, error: errs.length === 5 ? `Could not reach ${API_BASE_URL}. Showing fallback data.` : null, lastUpdated: new Date().toISOString(), apiReachable: reachable });
     } catch (err) {
       setLoad({ loading: false, error: err instanceof Error ? err.message : 'Load failed', lastUpdated: new Date().toISOString(), apiReachable: false });
     }

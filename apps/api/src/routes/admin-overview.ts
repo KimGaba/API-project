@@ -110,7 +110,7 @@ export async function adminOverviewRoutes(app: FastifyInstance) {
           s.status,
           s.monthly_quota,
           s.rpm_limit
-        ORDER BY current_period_total_requests::bigint DESC, c.created_at ASC
+        ORDER BY COALESCE(SUM(uc.total_requests), 0) DESC, c.created_at ASC
         LIMIT 12
       `, [periodStart]),
       query<UsageOverviewRow>(`
