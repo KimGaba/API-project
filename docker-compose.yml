@@ -80,6 +80,9 @@ services:
       PORT: ${API_PORT:-3011}
       API_KEYS: ${API_KEYS:-demo_live_123}
       HOST: 0.0.0.0
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost:3011}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3010}
+      DASHBOARD_BASE_URL: ${DASHBOARD_BASE_URL:-http://localhost:3012}
     ports:
       - "${API_PORT:-3011}:3011"
     volumes:
