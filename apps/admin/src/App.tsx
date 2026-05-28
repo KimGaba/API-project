@@ -262,15 +262,21 @@ export default function App() {
 
   const activeNav = useMemo(() => NAV.find(n => n.id === active) ?? NAV[0], [active]);
 
+  function fetchWithTimeout(url: string, ms = 10000) {
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), ms);
+    return fetch(url, { signal: c.signal }).finally(() => clearTimeout(t));
+  }
+
   async function loadData() {
     setLoad(c => ({ ...c, loading: true, error: null }));
     try {
       const [hRes, asRes, aoRes, bpRes, acRes] = await Promise.allSettled([
-        fetch(`${API_BASE_URL}/health`),
-        fetch(`${API_BASE_URL}/v1/admin/status`),
-        fetch(`${API_BASE_URL}/v1/admin/overview`),
-        fetch(`${API_BASE_URL}/v1/billing/plans`),
-        fetch(`${API_BASE_URL}/v1/admin/config`),
+        fetchWithTimeout(`${API_BASE_URL}/health`),
+        fetchWithTimeout(`${API_BASE_URL}/v1/admin/status`),
+        fetchWithTimeout(`${API_BASE_URL}/v1/admin/overview`),
+        fetchWithTimeout(`${API_BASE_URL}/v1/billing/plans`),
+        fetchWithTimeout(`${API_BASE_URL}/v1/admin/config`),
       ]);
       let reachable = false;
       const errs: string[] = [];

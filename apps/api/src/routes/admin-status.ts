@@ -78,9 +78,9 @@ export async function adminStatusRoutes(app: FastifyInstance) {
           sr.access_method,
           sr.commercial_reuse_allowed,
           sr.update_cadence,
-          COUNT(DISTINCT c.id) AS companies_count,
-          COUNT(DISTINCT rec.id) AS source_records_count,
-          COUNT(DISTINCT ir.id) AS ingestion_runs_count,
+          (SELECT COUNT(*) FROM companies c WHERE c.latest_source_id = sr.id)::text AS companies_count,
+          (SELECT COUNT(*) FROM source_records rec WHERE rec.source_id = sr.id)::text AS source_records_count,
+          (SELECT COUNT(*) FROM ingestion_runs ir WHERE ir.source_id = sr.id)::text AS ingestion_runs_count,
           latest.status AS last_run_status,
           latest.started_at AS last_run_started_at,
           latest.completed_at AS last_run_completed_at,
@@ -88,9 +88,6 @@ export async function adminStatusRoutes(app: FastifyInstance) {
           latest.records_written AS last_records_written,
           latest.records_failed AS last_records_failed
         FROM source_registry sr
-        LEFT JOIN companies c ON c.latest_source_id = sr.id
-        LEFT JOIN source_records rec ON rec.source_id = sr.id
-        LEFT JOIN ingestion_runs ir ON ir.source_id = sr.id
         LEFT JOIN LATERAL (
           SELECT
             ir2.status,
@@ -104,22 +101,6 @@ export async function adminStatusRoutes(app: FastifyInstance) {
           ORDER BY COALESCE(ir2.started_at, ir2.created_at) DESC, ir2.created_at DESC
           LIMIT 1
         ) latest ON TRUE
-        GROUP BY
-          sr.id,
-          sr.source_code,
-          sr.source_name,
-          sr.country_code,
-          sr.status,
-          sr.license_tag,
-          sr.access_method,
-          sr.commercial_reuse_allowed,
-          sr.update_cadence,
-          latest.status,
-          latest.started_at,
-          latest.completed_at,
-          latest.records_seen,
-          latest.records_written,
-          latest.records_failed
         ORDER BY sr.country_code ASC, sr.source_code ASC
       `),
       query<RunSummaryRow>(`
